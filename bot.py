@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
-required_channel_id = '@IAUM_group'
+required_channel_id = '@feghtesad'
 
 
 def start(update: Update, context: CallbackContext):
@@ -16,7 +16,7 @@ def start(update: Update, context: CallbackContext):
 
     # Create inline keyboard
     keyboard = [
-        [InlineKeyboardButton("Join Channel", url="https://t.me/IAUM_group"),
+        [InlineKeyboardButton("Join Channel", url="https://t.me/feghtesad"),
          InlineKeyboardButton("Check Channel", callback_data="check_channel")]
     ]
 
