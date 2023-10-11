@@ -13,7 +13,7 @@ httpcore==0.18.0
 httpx==0.25.0
 idna==3.4
 python-dotenv==1.0.0
-python-telegram-bot==13.13
+python-telegram-bot==13.7
 pytz==2023.3.post1
 requests==2.31.0
 six==1.16.0
