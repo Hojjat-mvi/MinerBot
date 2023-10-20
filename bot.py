@@ -35,7 +35,7 @@ def callback_handler(update: Update, context: CallbackContext):
             keyboard = ReplyKeyboardMarkup([
                 ["دستگاه BTCLN21M PRO 🚀", "دستگاه BTCLN 21 🚀"],
                 ["اخذ نمایندگی 👨‍💼", "ارتباط با ما 📧"]
-            ])
+            ], resize_keyboard=True)
             context.bot.send_message(
                 chat_id=user_id, text="چه کمکی از دستم برمیاد ؟ 😎", reply_markup=keyboard)
         else:
@@ -104,13 +104,14 @@ def handle_messages(update: Update, context: CallbackContext):
         [InlineKeyboardButton(
             "مصرف برق و اینترنت دستگاه 💡", callback_data="power_internet")],
         [InlineKeyboardButton(
+            "ابزار لازم برای راه اندازی دستگاه 🛠", callback_data="tools")
+         ],
+        [InlineKeyboardButton(
             "نحوه راه‌ اندازی و نگهداری دستگاه 🔧", callback_data="setup_maintenance")],
         [InlineKeyboardButton("گارانتی دستگاه 🔒", callback_data="warranty")],
         [InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery")],
-        [InlineKeyboardButton(
-            "ابزار لازم برای راه اندازی دستگاه 🛠", callback_data="tools")
-         ]
+
     ]
 
     if update.message.text == "دستگاه BTCLN21M PRO 🚀":
@@ -145,7 +146,7 @@ def handle_messages(update: Update, context: CallbackContext):
         income2 = InlineKeyboardButton(
             "درآمد دستگاه 💰", callback_data="income2")
         keyboard.append([income2])
-        local_photo_path = 'asset/code1.png'
+        local_photo_path = 'asset/minerPro.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
 
@@ -197,7 +198,7 @@ def handle_messages(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
     elif update.message.text == "ارتباط با ما 📧":
-        context.bot.send_message(chat_id=user_id, text="ارتباط با ما")
+        context.bot.send_message(chat_id=user_id, text="@Bitgoldadmin01 \n @Seagroup01")
 
     else:
         context.bot.send_message(chat_id=user_id, text="دستور تعریف نشده 😶")
