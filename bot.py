@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
-required_channel_id = '@bitgoldstore'
+required_channel_id = '@bazarrgani_ahoura'
 
 
 def start(update: Update, context: CallbackContext):
@@ -15,7 +15,7 @@ def start(update: Update, context: CallbackContext):
     welcome_text = "سلام 🙋‍♂️ \n به ربات ماینر بات خوش اومدی . \n برای استفاده از ربات لطفا در کانال زیر عضو شو. "
 
     keyboard = [
-        [InlineKeyboardButton("کانال ماینر بات", url="https://t.me/bitgoldstore"),
+        [InlineKeyboardButton("کانال ماینر بات", url="https://t.me/bazarrgani_ahoura"),
          InlineKeyboardButton("جوین شدم ✅", callback_data="check_channel")]
     ]
 
@@ -46,7 +46,7 @@ def callback_handler(update: Update, context: CallbackContext):
                 chat_id=user_id, text="چه کمکی از دستم برمیاد ؟ 😎", reply_markup=keyboard)
         else:
             keyboard = [
-                [InlineKeyboardButton("کانال ماینر بات", url="https://t.me/bitgoldstore"),
+                [InlineKeyboardButton("کانال ماینر بات", url="https://t.me/bazarrgani_ahoura"),
                  InlineKeyboardButton("جوین شدم ✅", callback_data="check_channel")]
             ]
             context.bot.send_message(
