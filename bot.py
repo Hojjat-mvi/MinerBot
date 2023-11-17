@@ -38,8 +38,10 @@ def callback_handler(update: Update, context: CallbackContext):
         is_member = context.bot.get_chat_member(required_channel_id, user_id).status in [
             'member', "owner", "administrator"]
         if is_member:
+            # define main keyboard buttons
             keyboard = ReplyKeyboardMarkup([
                 ["دستگاه BTCLN21M PRO 🚀", "دستگاه BTCLN 21M 🚀"],
+                ["دستگاه جدید"],
                 ["اخذ نمایندگی 👨‍💼", "ارتباط با ما 📧"]
             ], resize_keyboard=True)
             context.bot.send_message(
@@ -61,6 +63,10 @@ def callback_handler(update: Update, context: CallbackContext):
         faq_text = """- دستگاه BTCLN 21 M ماهانه بین ۳.۵ تا ۴.۵ میلیون تومان درآمد دارد که درامد خود را میتوانید از بین ۶ رمزارز  BTC , LTC , ETH , MATIC , DOGE , TRX, انتخاب کنید که چه ارزی را تحت عنوان درامد دریافت کنید. همچنین این قابلیت وجود دارد که بعد از هر برداشت رمز ارز انتخابی خود را تغییر دهید.
         
         - با توجه به فعالیت اخیر دستگاه درآمد شما ارتباط زیادی با کوین انتخابی شما دارد و در شرایط فعلی بازار کوین MATIC بازدهی بیشتری داشته است ."""
+        context.bot.send_message(chat_id=user_id, text=faq_text)
+
+    elif query.data == 'income3':
+        faq_text = """درآمد دستگاه\nدرامد این دستگاه ماهانه 333 تا 344 دلار می باشد.\nدرامد ماهیانه به تومان: تقریبا ۱۸ میلیون تومان\nپرداخت به صورت هر 9 روز و به مبلغ 100 دلار می باشد.\nحالت پرداخت درآمد به صورت یکی از ده ارز زیر و به صورت انتخابی خودتان می باشد:\nBTC\nETH\nLTC\nSOL\nDOT\nTRX\nMATIC\nAVAX\nXRP\nDOGE"""    
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
     elif query.data == "power_internet":
@@ -93,12 +99,15 @@ def callback_handler(update: Update, context: CallbackContext):
 
     elif query.data == "order_delivery1":
         faq_text = """قیمت دستگاه BTCLN 21M 
-        39/900/000 \n""" + orderDelivery
+        890$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery2":
         faq_text = """قیمت دستگاه BTCLN 21M PRO
-        59/900/000 \n""" + orderDelivery
+        1390$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
+    elif query.data == "order_delivery3":
+        faq_text = """قیمت دستگاه جدید
+        4095$ \n"""
 
 
 def handle_messages(update: Update, context: CallbackContext):
@@ -128,7 +137,7 @@ def handle_messages(update: Update, context: CallbackContext):
             "درآمد دستگاه 💰", callback_data="income1")
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery2")
-        keyboard.append([orderDeliveryButton,incomeButton1])
+        keyboard.append([orderDeliveryButton, incomeButton1])
         local_photo_path = 'asset/minerPro.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
@@ -150,8 +159,35 @@ def handle_messages(update: Update, context: CallbackContext):
             "درآمد دستگاه 💰", callback_data="income2")
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery1")
-        keyboard.append([orderDeliveryButton,incomeButton2])
+        keyboard.append([orderDeliveryButton, incomeButton2])
         local_photo_path = 'asset/miners.jpg'
+        context.bot.send_photo(chat_id=user_id, photo=open(
+            local_photo_path, 'rb'))
+
+        context.bot.send_message(
+            chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif update.message.text == "دستگاه جدید":
+        faq_text = """از لحاظ سخت افزار ، کاملا قدرتمند و ماندگار هست‌ .
+
+        مصرف برق دستگاه فوق نصف مصرف لپ تاپ هست و فقط با اتصال کابل شبکه به اینترنت متصل میشود.
+
+        پردازنده 5 هسته ای
+        رم 8
+        128 گیگ حافظه ssd
+        متصل به BTC pay server
+        6 خروجی کانال تائید تراکنش 
+        پورت hdmi
+        پورت vga
+        4 خروجی usb3
+        اتصال خودکار به BTC Core"""
+
+        incomeButton3 = InlineKeyboardButton(
+            "درآمد دستگاه 💰", callback_data="income3")
+        orderDeliveryButton = InlineKeyboardButton(
+            "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery3")
+        keyboard.append([orderDeliveryButton,incomeButton3])
+        local_photo_path = 'asset/newDevice.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
 
@@ -204,7 +240,7 @@ def handle_messages(update: Update, context: CallbackContext):
 
     elif update.message.text == "ارتباط با ما 📧":
         context.bot.send_message(
-            chat_id=user_id, text="@Bitgoldadmin01 \n @Seagroup01")
+            chat_id=user_id, text="@Ahouraadmin01 \n @Seagroup01 ادمین های ما \n")
 
     else:
         context.bot.send_message(chat_id=user_id, text="دستور تعریف نشده 😶")
