@@ -40,8 +40,8 @@ def callback_handler(update: Update, context: CallbackContext):
         if is_member:
             # define main keyboard buttons
             keyboard = ReplyKeyboardMarkup([
-                ["دستگاه BTCLN21M PRO 🚀", "دستگاه BTCLN 21M 🚀"],
-                ["دستگاه جدید"],
+                ["مدل BTCLN21M PRO 🚀", "مدل BTCLN 21M 🚀"],
+                ["مدل BTCLN PRIME 🚀"],
                 ["اخذ نمایندگی 👨‍💼", "ارتباط با ما 📧"]
             ], resize_keyboard=True)
             context.bot.send_message(
@@ -107,7 +107,7 @@ def callback_handler(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery3":
         faq_text = """قیمت دستگاه جدید
-        4095$ \n""" + orderDelivery
+        4090$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
 
@@ -125,7 +125,7 @@ def handle_messages(update: Update, context: CallbackContext):
 
     ]
 
-    if update.message.text == "دستگاه BTCLN21M PRO 🚀":
+    if update.message.text == "مدل BTCLN21M PRO 🚀":
         faq_text = """Ram 8 to finally
         پردازنده ۵ هسته 1.8GHz 64 BIT
         Overclock
@@ -146,7 +146,7 @@ def handle_messages(update: Update, context: CallbackContext):
         context.bot.send_message(
             chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    elif update.message.text == "دستگاه BTCLN 21M 🚀":
+    elif update.message.text == "مدل BTCLN 21M 🚀":
         faq_text = """مدل BTCLN 21M 
         حافظه RM4
         پردازنده 4 هسته 1.5GHz 64 BT
@@ -168,7 +168,7 @@ def handle_messages(update: Update, context: CallbackContext):
         context.bot.send_message(
             chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    elif update.message.text == "دستگاه جدید":
+    elif update.message.text == "مدل BTCLN PRIME 🚀":
         faq_text = """از لحاظ سخت افزار ، کاملا قدرتمند و ماندگار هست‌ .
 
         مصرف برق دستگاه فوق نصف مصرف لپ تاپ هست و فقط با اتصال کابل شبکه به اینترنت متصل میشود.
