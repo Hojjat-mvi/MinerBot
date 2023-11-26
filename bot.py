@@ -99,15 +99,15 @@ def callback_handler(update: Update, context: CallbackContext):
 
     elif query.data == "order_delivery1":
         faq_text = """قیمت دستگاه BTCLN 21M 
-        890$ \n""" + orderDelivery
+        930$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery2":
         faq_text = """قیمت دستگاه BTCLN 21M PRO
-        1390$ \n""" + orderDelivery
+        1450$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery3":
         faq_text = """قیمت دستگاه جدید
-        4090$ \n""" + orderDelivery
+        4600$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
 
