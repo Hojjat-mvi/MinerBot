@@ -107,7 +107,7 @@ def callback_handler(update: Update, context: CallbackContext):
         1450$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery3":
-        faq_text = """قیمت دستگاه جدید
+        faq_text = """قیمت دستگاه BTCLN PRIME
         4600$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
