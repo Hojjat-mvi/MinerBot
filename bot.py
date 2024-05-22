@@ -100,11 +100,11 @@ def callback_handler(update: Update, context: CallbackContext):
 
     elif query.data == "order_delivery1":
         faq_text = """قیمت دستگاه BTCLN 21M 
-        930$ \n""" + orderDelivery
+        990$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery2":
         faq_text = """قیمت دستگاه BTCLN 21M PRO
-        1450$ \n""" + orderDelivery
+        1550$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery3":
         faq_text = """قیمت دستگاه BTCLN PRIME
@@ -162,7 +162,7 @@ def handle_messages(update: Update, context: CallbackContext):
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery1")
         keyboard.append([orderDeliveryButton, incomeButton2])
-        local_photo_path = 'asset/miners.jpg'
+        local_photo_path = 'asset/two-channels.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
 
@@ -189,7 +189,7 @@ def handle_messages(update: Update, context: CallbackContext):
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery3")
         keyboard.append([orderDeliveryButton,incomeButton3])
-        local_photo_path = 'asset/newDevice.jpg'
+        local_photo_path = 'asset/six-channels.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
 
