@@ -40,8 +40,8 @@ def callback_handler(update: Update, context: CallbackContext):
         if is_member:
             # define main keyboard buttons
             keyboard = ReplyKeyboardMarkup([
-                ["مدل BTCLN21M PRO 🚀", "مدل BTCLN 21M 🚀"],
-                ["مدل BTCLN PRIME 🚀"],
+                ["مدل چهار کانال 🚀", "مدل دو کانال 🚀"],
+                ["مدل شش کانال 🚀"],
                 ["اخذ نمایندگی 👨‍💼", "ارتباط با ما 📧"]
             ], resize_keyboard=True)
             context.bot.send_message(
@@ -99,15 +99,15 @@ def callback_handler(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
     elif query.data == "order_delivery1":
-        faq_text = """قیمت دستگاه BTCLN 21M 
+        faq_text = """قیمت دستگاه دو کانال 
         990$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery2":
-        faq_text = """قیمت دستگاه BTCLN 21M PRO
+        faq_text = """قیمت دستگاه دو کانال PRO
         1550$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery3":
-        faq_text = """قیمت دستگاه BTCLN PRIME
+        faq_text = """قیمت دستگاه شش کانال
         4600$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
@@ -126,7 +126,7 @@ def handle_messages(update: Update, context: CallbackContext):
 
     ]
 
-    if update.message.text == "مدل BTCLN21M PRO 🚀":
+    if update.message.text == "مدل چهار کانال 🚀":
         faq_text = """Ram 8 to finally
         پردازنده ۵ هسته 1.8GHz 64 BIT
         Overclock
@@ -140,15 +140,15 @@ def handle_messages(update: Update, context: CallbackContext):
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery2")
         keyboard.append([orderDeliveryButton, incomeButton1])
-        local_photo_path = 'asset/minerPro.jpg'
+        local_photo_path = 'asset/four-channels.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
 
         context.bot.send_message(
             chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    elif update.message.text == "مدل BTCLN 21M 🚀":
-        faq_text = """مدل BTCLN 21M 
+    elif update.message.text == "مدل دو کانال 🚀":
+        faq_text = """مدل دو کانال 
         حافظه RM4
         پردازنده 4 هسته 1.5GHz 64 BT
         پشتیبانی از کابل شبکه و وایرلس
@@ -169,7 +169,7 @@ def handle_messages(update: Update, context: CallbackContext):
         context.bot.send_message(
             chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    elif update.message.text == "مدل BTCLN PRIME 🚀":
+    elif update.message.text == "مدل شش کانال 🚀":
         faq_text = """از لحاظ سخت افزار ، کاملا قدرتمند و ماندگار هست‌ .
 
         مصرف برق دستگاه فوق نصف مصرف لپ تاپ هست و فقط با اتصال کابل شبکه به اینترنت متصل میشود.
