@@ -60,7 +60,7 @@ def callback_handler(update: Update, context: CallbackContext):
     - با توجه به فعالیت اخیر دستگاه درآمد شما ارتباط زیادی با کوین انتخابی شما دارد و در شرایط فعلی بازار کوین MATIC بازدهی بیشتری داشته است ."""
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == 'income2':
-        faq_text = """- دستگاه BTCLN 21 M ماهانه بین ۳.۵ تا ۴.۵ میلیون تومان درآمد دارد که درامد خود را میتوانید از بین ۶ رمزارز  BTC , LTC , ETH , MATIC , DOGE , TRX, انتخاب کنید که چه ارزی را تحت عنوان درامد دریافت کنید. همچنین این قابلیت وجود دارد که بعد از هر برداشت رمز ارز انتخابی خود را تغییر دهید.
+        faq_text = """- دستگاه دو کانال ماهانه بین ۳.۵ تا ۴.۵ میلیون تومان درآمد دارد که درامد خود را میتوانید از بین 8 رمزارز  BTC , LTC , ETH , MATIC , DOGE , TRX, انتخاب کنید که چه ارزی را تحت عنوان درامد دریافت کنید. همچنین این قابلیت وجود دارد که بعد از هر برداشت رمز ارز انتخابی خود را تغییر دهید.
         
         - با توجه به فعالیت اخیر دستگاه درآمد شما ارتباط زیادی با کوین انتخابی شما دارد و در شرایط فعلی بازار کوین MATIC بازدهی بیشتری داشته است ."""
         context.bot.send_message(chat_id=user_id, text=faq_text)
@@ -103,8 +103,8 @@ def callback_handler(update: Update, context: CallbackContext):
         990$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery2":
-        faq_text = """قیمت دستگاه دو کانال PRO
-        1550$ \n""" + orderDelivery
+        faq_text = """قیمت دستگاه چهار کانال PRO
+        موجود نیست \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
     elif query.data == "order_delivery3":
         faq_text = """قیمت دستگاه شش کانال
@@ -140,9 +140,9 @@ def handle_messages(update: Update, context: CallbackContext):
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery2")
         keyboard.append([orderDeliveryButton, incomeButton1])
-        local_photo_path = 'asset/four-channels.jpg'
-        context.bot.send_photo(chat_id=user_id, photo=open(
-            local_photo_path, 'rb'))
+        # local_photo_path = 'asset/four-channels.jpg'
+        # context.bot.send_photo(chat_id=user_id, photo=open(
+        #     local_photo_path, 'rb'))
 
         context.bot.send_message(
             chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
