@@ -9,6 +9,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 required_channel_id = '@bazarrgani_ahoura'
 
 
+
 def start(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
 
@@ -244,7 +245,7 @@ def handle_messages(update: Update, context: CallbackContext):
 
     elif update.message.text == "ارتباط با ما 📧":
         context.bot.send_message(
-            chat_id=user_id, text="@Ahouraadmin01 \n @Seagroup01 ادمین های ما \n 09154039200 - لشکری \n 09051352153 - خسروانی")
+            chat_id=user_id, text="@Ahouraadmin01 \n @Abolfazl_lashkari ادمین های ما \n 09154039200 - لشکری \n 09051352153 - خسروانی")
 
     else:
         context.bot.send_message(chat_id=user_id, text="دستور تعریف نشده 😶")
