@@ -85,7 +85,7 @@ def callback_handler(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
         # Send the video (replace with your video file path or URL)
-        video_url = "https://yourwebsite.com/wp-content/uploads/2024/11/video.mp4"
+        video_url = "https://ahuraminer.com/wp-content/uploads/2024/11/video_2024-11-28_15-40-49-3.mp4"
         context.bot.send_video(chat_id=user_id, video=video_url)
 
     elif query.data == "setup_maintenance":
