@@ -84,6 +84,10 @@ def callback_handler(update: Update, context: CallbackContext):
         نکته : دستگاه به صورت وایرلس هم قابل استفاده است، اما با توجه به وضعیت اینترنت کشور ، استفاده از کابل شبکه (LAN) برای اتصال به شبکه انتخاب بهتری است."""
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
+        # Send the video (replace with your video file path or URL)
+        video_url = "https://yourwebsite.com/wp-content/uploads/2024/11/video.mp4"
+        context.bot.send_video(chat_id=user_id, video=video_url)
+
     elif query.data == "setup_maintenance":
         faq_text = """۱_ استفاده از محافظ‌ برق جهت جلوگیری از نوسانات برق.
         ۲_ دور از رطوبت و گرد و خاک نگهداری شود.
@@ -143,9 +147,9 @@ def handle_messages(update: Update, context: CallbackContext):
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery2")
         keyboard.append([orderDeliveryButton, incomeButton1])
-        # local_photo_path = 'asset/four-channels.jpg'
-        # context.bot.send_photo(chat_id=user_id, photo=open(
-        #     local_photo_path, 'rb'))
+        local_photo_path = 'asset/four-channels.jpg'
+        context.bot.send_photo(chat_id=user_id, photo=open(
+            local_photo_path, 'rb'))
 
         context.bot.send_message(
             chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
