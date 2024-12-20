@@ -84,9 +84,7 @@ def callback_handler(update: Update, context: CallbackContext):
         نکته : دستگاه به صورت وایرلس هم قابل استفاده است، اما با توجه به وضعیت اینترنت کشور ، استفاده از کابل شبکه (LAN) برای اتصال به شبکه انتخاب بهتری است."""
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
-        # Send the video (replace with your video file path or URL)
-        video_url = "https://ahuraminer.com/wp-content/uploads/2024/11/video_2024-11-28_15-40-49-3.mp4"
-        context.bot.send_video(chat_id=user_id, video=video_url)
+        
 
     elif query.data == "setup_maintenance":
         faq_text = """۱_ استفاده از محافظ‌ برق جهت جلوگیری از نوسانات برق.
@@ -117,6 +115,18 @@ def callback_handler(update: Update, context: CallbackContext):
         faq_text = """قیمت دستگاه شش کانال
         4600$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
+    elif query.data == "twoChannelDeviceSetupCallback":
+        # Send the video (replace with your video file path or URL)
+        two_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/two-channel-device.mp4"
+        context.bot.send_video(chat_id=user_id, video=two_channel_device_video_url)
+    elif query.data == "fourChannelDeviceSetupCallback":
+        # Send the video (replace with your video file path or URL)
+        four_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/four-channel-device.mp4"
+        context.bot.send_video(chat_id=user_id, video=four_channel_device_video_url)
+    elif query.data == "sixChannelDeviceSetupCallback":
+        # Send the video (replace with your video file path or URL)
+        six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/six-channel-device.mp4"
+        context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
 
 
 def handle_messages(update: Update, context: CallbackContext):
@@ -146,7 +156,8 @@ def handle_messages(update: Update, context: CallbackContext):
             "درآمد دستگاه 💰", callback_data="income1")
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery2")
-        keyboard.append([orderDeliveryButton, incomeButton1])
+        fourChannelDeviceSetup = InlineKeyboardButton("نحوه راه اندازی دستگاه 🛠",callback_data="fourChannelDeviceSetupCallback")
+        keyboard.append([orderDeliveryButton, incomeButton1,fourChannelDeviceSetup])
         local_photo_path = 'asset/four-channels.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
@@ -168,7 +179,8 @@ def handle_messages(update: Update, context: CallbackContext):
             "درآمد دستگاه 💰", callback_data="income2")
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery1")
-        keyboard.append([orderDeliveryButton, incomeButton2])
+        twoChannelDeviceSetup = InlineKeyboardButton("نحوه راه اندازی دستگاه 🛠",callback_data="twoChannelDeviceSetupCallback")
+        keyboard.append([orderDeliveryButton, incomeButton2,twoChannelDeviceSetup])
         local_photo_path = 'asset/two-channels.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
@@ -195,7 +207,8 @@ def handle_messages(update: Update, context: CallbackContext):
             "درآمد دستگاه 💰", callback_data="income3")
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery3")
-        keyboard.append([orderDeliveryButton,incomeButton3])
+        sixChannelDeviceSetup = InlineKeyboardButton("نحوه راه اندازی دستگاه 🛠",callback_data="sixChannelDeviceSetupCallback")
+        keyboard.append([orderDeliveryButton,incomeButton3,fourChannelDeviceSetup])
         local_photo_path = 'asset/six-channels.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
