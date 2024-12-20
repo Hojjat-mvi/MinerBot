@@ -138,7 +138,7 @@ def handle_messages(update: Update, context: CallbackContext):
         [InlineKeyboardButton(
             "مصرف برق و اینترنت دستگاه 💡", callback_data="power_internet")],      
         [InlineKeyboardButton(
-            "نحوه راه‌ اندازی و نگهداری دستگاه 🔧", callback_data="setup_maintenance")],
+            "نحوه نگهداری دستگاه 🔧", callback_data="setup_maintenance")],
         [InlineKeyboardButton("گارانتی دستگاه 🔒", callback_data="warranty")],
 
     ]
