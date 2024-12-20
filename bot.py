@@ -76,11 +76,11 @@ def callback_handler(update: Update, context: CallbackContext):
         context.bot.send_video(chat_id=user_id, video=two_channel_device_video_url)
     elif query.data == "fourChannelDeviceSetupCallback":
         # Send the video (replace with your video file path or URL)
-        four_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/four-channel-device.mp4"
+        four_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/four-channel-device.mp4"
         context.bot.send_video(chat_id=user_id, video=four_channel_device_video_url)
     elif query.data == "sixChannelDeviceSetupCallback":
         # Send the video (replace with your video file path or URL)
-        six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/six-channel-device.mp4"
+        six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/six-channel-device.mp4"
         context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
 
 
