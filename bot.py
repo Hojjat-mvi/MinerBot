@@ -70,10 +70,6 @@ def callback_handler(update: Update, context: CallbackContext):
         faq_text = """درآمد دستگاه\nدرامد این دستگاه ماهانه 333 تا 344 دلار می باشد.\nدرامد ماهیانه به تومان: تقریبا ۱۸ میلیون تومان\nپرداخت به صورت هر 9 روز و به مبلغ 100 دلار می باشد.\nحالت پرداخت درآمد به صورت یکی از ده ارز زیر و به صورت انتخابی خودتان می باشد:\nBTC\nETH\nLTC\nSOL\nDOT\nTRX\nMATIC\nAVAX\nXRP\nDOGE"""    
         context.bot.send_message(chat_id=user_id, text=faq_text)
     
-    elif query.data == "twoChannelDeviceSetupCallback":
-        # Send the video (replace with your video file path or URL)
-        two_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/two-channel-device.mp4"
-        context.bot.send_video(chat_id=user_id, video=two_channel_device_video_url)
     elif query.data == "fourChannelDeviceSetupCallback":
         # Send the video (replace with your video file path or URL)
         four_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/four-channel-device.mp4"
@@ -82,6 +78,10 @@ def callback_handler(update: Update, context: CallbackContext):
         # Send the video (replace with your video file path or URL)
         six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/six-channel-device.mp4"
         context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
+    elif query.data == "twoChannelDeviceSetupCallback":
+        # Send the video (replace with your video file path or URL)
+        two_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/two-channel-device.mp4"
+        context.bot.send_video(chat_id=user_id, video=two_channel_device_video_url)
 
 
     elif query.data == "power_internet":
