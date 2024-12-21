@@ -65,7 +65,7 @@ def callback_handler(update: Update, context: CallbackContext):
         six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/six-channel-device.mp4"
         context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
     elif query.data == "twoChannelDeviceSetupCallback":
-        local_video_path = os.path.join("asset", "two_channel_device.mp4")
+        local_video_path = os.path.join("asset", "two-channel-device.mp4")
 
         if os.path.exists(local_video_path):
             try:
