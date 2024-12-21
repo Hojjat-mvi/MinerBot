@@ -208,7 +208,7 @@ def handle_messages(update: Update, context: CallbackContext):
         orderDeliveryButton = InlineKeyboardButton(
             "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery3")
         sixChannelDeviceSetup = InlineKeyboardButton("نحوه راه اندازی دستگاه 🛠",callback_data="sixChannelDeviceSetupCallback")
-        keyboard.append([orderDeliveryButton,incomeButton3,fourChannelDeviceSetup])
+        keyboard.append([orderDeliveryButton,incomeButton3,sixChannelDeviceSetup])
         local_photo_path = 'asset/six-channels.jpg'
         context.bot.send_photo(chat_id=user_id, photo=open(
             local_photo_path, 'rb'))
