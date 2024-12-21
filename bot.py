@@ -80,7 +80,7 @@ def callback_handler(update: Update, context: CallbackContext):
         context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
     elif query.data == "twoChannelDeviceSetupCallback":
         # Send the video (replace with your video file path or URL)
-        two_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/two-channel-device.mp4"
+        two_channel_device_video_url = "https://drive.google.com/file/d/1LNBN84KwFtkx_T99nMxZETleTnZ_jsYB/view?usp=drive_link"
         context.bot.send_video(chat_id=user_id, video=two_channel_device_video_url)
 
 
