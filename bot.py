@@ -65,7 +65,7 @@ def callback_handler(update: Update, context: CallbackContext):
         six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/six-channel-device.mp4"
         context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
     elif query.data == "twoChannelDeviceSetupCallback":
-        two_channel_device_video_url = "https://drive.google.com/uc?export=download&id=1LNBN84KwFtkx_T99nMxZETleTnZ_jsYB"
+        two_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/two-channel-device.mp4"
         context.bot.send_video(chat_id=user_id, video=two_channel_device_video_url)
 
     elif query.data == "power_internet":
