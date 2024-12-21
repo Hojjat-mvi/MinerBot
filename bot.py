@@ -65,9 +65,18 @@ def callback_handler(update: Update, context: CallbackContext):
         six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/six-channel-device.mp4"
         context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
     elif query.data == "twoChannelDeviceSetupCallback":
-        two_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/04/two-channel-device.mp4"
-        context.bot.send_video(chat_id=user_id, video=two_channel_device_video_url)
+        local_video_path = os.path.join("assets", "two_channel_device.mp4")
 
+        if os.path.exists(local_video_path):
+            try:
+                # Send the video to the user
+                context.bot.send_video(chat_id=user_id, video=open(local_video_path, "rb"))
+            except Exception as e:
+                context.bot.send_message(chat_id=user_id, text="خطای غیرمنتظره‌ای رخ داده است.")
+        else:
+            context.bot.send_message(chat_id=user_id, text="ویدیو در دسترس نیست. لطفاً فایل را بررسی کنید.")
+
+            
     elif query.data == "power_internet":
         faq_text = """- مصرف برق دستگاه ۱۰۰ وات که معادل یک لامپ ۱۰۰ می‌باشد و با یک آداپتور لپ تاپ 5 آمپر تغذیه می‌شود .
         - با توجه به مصرف برق پایین دستگاه،  هیچگونه محدودیتی بابت استفاده برق خانگی در منزل وجود ندارد .
