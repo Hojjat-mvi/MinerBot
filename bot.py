@@ -8,6 +8,7 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 required_channel_id = '@bazarrgani_ahoura'
 
+
 def start(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     welcome_text = "سلام 🙋‍♂️ \n به ربات ماینر بات خوش اومدی . \n برای استفاده از ربات لطفا در کانال زیر عضو شو. "
@@ -15,7 +16,9 @@ def start(update: Update, context: CallbackContext):
         [InlineKeyboardButton("کانال ماینر بات", url="https://t.me/bazarrgani_ahoura"),
          InlineKeyboardButton("جوین شدم ✅", callback_data="check_channel")]
     ]
-    context.bot.send_message(chat_id=user_id, text=welcome_text, reply_markup=InlineKeyboardMarkup(keyboard))
+    context.bot.send_message(
+        chat_id=user_id, text=welcome_text, reply_markup=InlineKeyboardMarkup(keyboard))
+
 
 def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -35,13 +38,15 @@ def callback_handler(update: Update, context: CallbackContext):
                 ["مدل شش کانال 🚀"],
                 ["اخذ نمایندگی 👨‍💼", "ارتباط با ما 📧"]
             ], resize_keyboard=True)
-            context.bot.send_message(chat_id=user_id, text="چه کمکی از دستم برمیاد ؟ 😎", reply_markup=keyboard)
+            context.bot.send_message(
+                chat_id=user_id, text="چه کمکی از دستم برمیاد ؟ 😎", reply_markup=keyboard)
         else:
             keyboard = [
                 [InlineKeyboardButton("کانال ماینر بات", url="https://t.me/bazarrgani_ahoura"),
                  InlineKeyboardButton("جوین شدم ✅", callback_data="check_channel")]
             ]
-            context.bot.send_message(chat_id=user_id, text="شما عضو کانال ماینر بات نیستید ❌🤨", reply_markup=InlineKeyboardMarkup(keyboard))
+            context.bot.send_message(
+                chat_id=user_id, text="شما عضو کانال ماینر بات نیستید ❌🤨", reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == 'income1':
         faq_text = """- دستگاه  چهار کانال ماهانه بین ۵.۵ تا ۶.۵ میلیون تومان درآمد دارد که درامد خود را میتوانید از بین ۶ رمزارز  BTC, LTC , ETH , MATIC , DOGE , TRX, انتخاب کنید که چه ارزی را تحت عنوان درامد دریافت کنید. همچنین این قابلیت وجود دارد که بعد از هر برداشت رمز ارز انتخابی خود را تغییر دهید. 
@@ -55,27 +60,31 @@ def callback_handler(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
     elif query.data == 'income3':
-        faq_text = """درآمد دستگاه\nدرامد این دستگاه ماهانه 333 تا 344 دلار می باشد.\nدرامد ماهیانه به تومان: تقریبا ۱۸ میلیون تومان\nپرداخت به صورت هر 9 روز و به مبلغ 100 دلار می باشد.\nحالت پرداخت درآمد به صورت یکی از ده ارز زیر و به صورت انتخابی خودتان می باشد:\nBTC\nETH\nLTC\nSOL\nDOT\nTRX\nMATIC\nAVAX\nXRP\nDOGE"""    
+        faq_text = """درآمد دستگاه\nدرامد این دستگاه ماهانه 333 تا 344 دلار می باشد.\nدرامد ماهیانه به تومان: تقریبا ۱۸ میلیون تومان\nپرداخت به صورت هر 9 روز و به مبلغ 100 دلار می باشد.\nحالت پرداخت درآمد به صورت یکی از ده ارز زیر و به صورت انتخابی خودتان می باشد:\nBTC\nETH\nLTC\nSOL\nDOT\nTRX\nMATIC\nAVAX\nXRP\nDOGE"""
         context.bot.send_message(chat_id=user_id, text=faq_text)
-    
+
     elif query.data == "fourChannelDeviceSetupCallback":
         four_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/four-channel-device.mp4"
-        context.bot.send_video(chat_id=user_id, video=four_channel_device_video_url)
+        context.bot.send_video(
+            chat_id=user_id, video=four_channel_device_video_url)
     elif query.data == "sixChannelDeviceSetupCallback":
         six_channel_device_video_url = "https://ahuraminer.com/wp-content/uploads/2024/12/six-channel-device.mp4"
-        context.bot.send_video(chat_id=user_id, video=six_channel_device_video_url)
+        context.bot.send_video(
+            chat_id=user_id, video=six_channel_device_video_url)
     elif query.data == "twoChannelDeviceSetupCallback":
         local_video_path = os.path.join("asset", "two-channel-device.mp4")
 
         if os.path.exists(local_video_path):
             try:
                 # Send the video to the user
-                context.bot.send_video(chat_id=user_id, video=open(local_video_path, "rb"))
+                context.bot.send_video(
+                    chat_id=user_id, video=open(local_video_path, "rb"))
             except Exception as e:
-                context.bot.send_message(chat_id=user_id, text="خطای غیرمنتظره‌ای رخ داده است.")
+                context.bot.send_message(
+                    chat_id=user_id, text="خطای غیرمنتظره‌ای رخ داده است.")
         else:
-            context.bot.send_message(chat_id=user_id, text="ویدیو در دسترس نیست. لطفاً فایل را بررسی کنید.")
-
+            context.bot.send_message(
+                chat_id=user_id, text="ویدیو در دسترس نیست. لطفاً فایل را بررسی کنید.")
 
     elif query.data == "power_internet":
         faq_text = """- مصرف برق دستگاه ۱۰۰ وات که معادل یک لامپ ۱۰۰ می‌باشد و با یک آداپتور لپ تاپ 5 آمپر تغذیه می‌شود .
@@ -121,130 +130,152 @@ def callback_handler(update: Update, context: CallbackContext):
         4600$ \n""" + orderDelivery
         context.bot.send_message(chat_id=user_id, text=faq_text)
 
+
 def handle_messages(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
+    """Safely handle incoming text messages with error handling and optimizations."""
+    message = update.effective_message
+    user = update.effective_user
+
+    # Ensure both message and user exist
+    if not message or not user:
+        context.bot.logger.warning(f"Non-message update received: {update}")
+        return
+
+    user_id = user.id
+    text = message.text or ""  # handle None safely
+
+    # Base keyboard (always present)
     keyboard = [
-        [InlineKeyboardButton(
-            "مصرف برق و اینترنت دستگاه 💡", callback_data="power_internet")],      
-        [InlineKeyboardButton(
-            "نحوه نگهداری دستگاه 🔧", callback_data="setup_maintenance")],
+        [InlineKeyboardButton("مصرف برق و اینترنت دستگاه 💡",
+                              callback_data="power_internet")],
+        [InlineKeyboardButton("نحوه نگهداری دستگاه 🔧",
+                              callback_data="setup_maintenance")],
         [InlineKeyboardButton("گارانتی دستگاه 🔒", callback_data="warranty")],
     ]
 
-    if update.message.text == "مدل چهار کانال 🚀":
-        faq_text = """Ram 8 to finally
-        پردازنده ۵ هسته 1.8GHz 64 BIT
-        Overclock
-        دارای ۲ پورت USB3
-        دارای ۲ پورت USB2
-        دارای پورت HDMI
-        ساخت کشور چین"""
+    try:
+        if text == "مدل چهار کانال 🚀":
+            faq_text = (
+                "Ram 8 to finally\n"
+                "پردازنده ۵ هسته 1.8GHz 64 BIT\n"
+                "Overclock\n"
+                "دارای ۲ پورت USB3\n"
+                "دارای ۲ پورت USB2\n"
+                "دارای پورت HDMI\n"
+                "ساخت کشور چین"
+            )
+            extra_buttons = [
+                InlineKeyboardButton(
+                    "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery2"),
+                InlineKeyboardButton(
+                    "درآمد دستگاه 💰", callback_data="income1"),
+                InlineKeyboardButton(
+                    "نحوه راه اندازی دستگاه 🛠", callback_data="fourChannelDeviceSetupCallback"),
+            ]
+            keyboard.append(extra_buttons)
 
-        incomeButton1 = InlineKeyboardButton(
-            "درآمد دستگاه 💰", callback_data="income1")
-        orderDeliveryButton = InlineKeyboardButton(
-            "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery2")
-        fourChannelDeviceSetup = InlineKeyboardButton("نحوه راه اندازی دستگاه 🛠",callback_data="fourChannelDeviceSetupCallback")
-        keyboard.append([orderDeliveryButton, incomeButton1,fourChannelDeviceSetup])
-        local_photo_path = 'asset/four-channels.jpg'
-        context.bot.send_photo(chat_id=user_id, photo=open(local_photo_path, 'rb'))
-        context.bot.send_message(chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
+            with open("asset/four-channels.jpg", "rb") as photo:
+                context.bot.send_photo(chat_id=user_id, photo=photo)
 
-    elif update.message.text == "مدل دو کانال 🚀":
-        faq_text = """مدل دو کانال 
-        حافظه RM4
-        پردازنده 4 هسته 1.5GHz 64 BT
-        پشتیبانی از کابل شبکه و وایرلس
-        دارای دو پورت usb3 و usb2
-        دارای دو کانال خروجی مالی 
-        پشتیبانی از کابل HDMI
-        ساخت کشور چین"""
+            context.bot.send_message(
+                chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-        incomeButton2 = InlineKeyboardButton(
-            "درآمد دستگاه 💰", callback_data="income2")
-        orderDeliveryButton = InlineKeyboardButton(
-            "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery1")
-        twoChannelDeviceSetup = InlineKeyboardButton("نحوه راه اندازی دستگاه 🛠",callback_data="twoChannelDeviceSetupCallback")
-        keyboard.append([orderDeliveryButton, incomeButton2,twoChannelDeviceSetup])
-        local_photo_path = 'asset/two-channels.jpg'
-        context.bot.send_photo(chat_id=user_id, photo=open(local_photo_path, 'rb'))
-        context.bot.send_message(chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
+        elif text == "مدل دو کانال 🚀":
+            faq_text = (
+                "مدل دو کانال\n"
+                "حافظه RM4\n"
+                "پردازنده 4 هسته 1.5GHz 64 BT\n"
+                "پشتیبانی از کابل شبکه و وایرلس\n"
+                "دارای دو پورت usb3 و usb2\n"
+                "دارای دو کانال خروجی مالی\n"
+                "پشتیبانی از کابل HDMI\n"
+                "ساخت کشور چین"
+            )
+            extra_buttons = [
+                InlineKeyboardButton(
+                    "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery1"),
+                InlineKeyboardButton(
+                    "درآمد دستگاه 💰", callback_data="income2"),
+                InlineKeyboardButton(
+                    "نحوه راه اندازی دستگاه 🛠", callback_data="twoChannelDeviceSetupCallback"),
+            ]
+            keyboard.append(extra_buttons)
 
-    elif update.message.text == "مدل شش کانال 🚀":
-        faq_text = """از لحاظ سخت افزار ، کاملا قدرتمند و ماندگار هست‌ .
+            with open("asset/two-channels.jpg", "rb") as photo:
+                context.bot.send_photo(chat_id=user_id, photo=photo)
 
-        مصرف برق دستگاه فوق نصف مصرف لپ تاپ هست و فقط با اتصال کابل شبکه به اینترنت متصل میشود.
+            context.bot.send_message(
+                chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-        پردازنده 5 هسته ای
-        رم 8
-        128 گیگ حافظه ssd
-        متصل به BTC pay server
-        6 خروجی کانال تائید تراکنش 
-        پورت hdmi
-        پورت vga
-        4 خروجی usb3
-        اتصال خودکار به BTC Core"""
+        elif text == "مدل شش کانال 🚀":
+            faq_text = (
+                "از لحاظ سخت افزار ، کاملا قدرتمند و ماندگار هست‌.\n\n"
+                "مصرف برق دستگاه فوق نصف مصرف لپ تاپ هست و فقط با اتصال کابل شبکه به اینترنت متصل میشود.\n\n"
+                "پردازنده 5 هسته ای\n"
+                "رم 8\n"
+                "128 گیگ حافظه ssd\n"
+                "متصل به BTC pay server\n"
+                "6 خروجی کانال تائید تراکنش\n"
+                "پورت hdmi\n"
+                "پورت vga\n"
+                "4 خروجی usb3\n"
+                "اتصال خودکار به BTC Core"
+            )
+            extra_buttons = [
+                InlineKeyboardButton(
+                    "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery3"),
+                InlineKeyboardButton(
+                    "درآمد دستگاه 💰", callback_data="income3"),
+                InlineKeyboardButton(
+                    "نحوه راه اندازی دستگاه 🛠", callback_data="sixChannelDeviceSetupCallback"),
+            ]
+            keyboard.append(extra_buttons)
 
-        incomeButton3 = InlineKeyboardButton(
-            "درآمد دستگاه 💰", callback_data="income3")
-        orderDeliveryButton = InlineKeyboardButton(
-            "نحوه اطلاع از قیمت ، ثبت سفارش و تحویل دستگاه 💵", callback_data="order_delivery3")
-        sixChannelDeviceSetup = InlineKeyboardButton("نحوه راه اندازی دستگاه 🛠",callback_data="sixChannelDeviceSetupCallback")
-        keyboard.append([orderDeliveryButton,incomeButton3,sixChannelDeviceSetup])
-        local_photo_path = 'asset/six-channels.jpg'
-        context.bot.send_photo(chat_id=user_id, photo=open(local_photo_path, 'rb'))
-        context.bot.send_message(chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
+            with open("asset/six-channels.jpg", "rb") as photo:
+                context.bot.send_photo(chat_id=user_id, photo=photo)
 
-    elif update.message.text == "اخذ نمایندگی 👨‍💼":
-        faq_text = """اعطای نمایندگی : 
+            context.bot.send_message(
+                chat_id=user_id, text=faq_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-        🎯 چگونه به شبکه بزرگ فروش بازرگانی اهورا بپیوندیم؟!
+        elif text == "اخذ نمایندگی 👨‍💼":
+            faq_text = (
+                "اعطای نمایندگی:\n\n"
+                "🎯 چگونه به شبکه بزرگ فروش بازرگانی اهورا بپیوندیم؟!\n\n"
+                "✅ اخذ نمایندگی کل استان و یا شهرستان:\n"
+                "اشخاصی که در عرصه کسب و کار فعال می‌باشند...\n\n"
+                "✅ شرایط لازم جهت اخذ نمایندگی بازرگانی اهورا:\n"
+                "۱. تعهد به بازرگانی اهورا و مشتریان\n"
+                "۲. داشتن حداقل امکانات\n"
+                "۳. توانایی فروش\n"
+                "۴. حفظ ارتباط با مشتری و بازرگانی\n\n"
+                "✅ مدارک لازم:\n"
+                "۱. درخواست کتبی\n"
+                "۲. تصویر شناسنامه و کارت ملی\n"
+                "۳. آدرس دقیق متقاضی"
+            )
+            context.bot.send_message(chat_id=user_id, text=faq_text)
 
-        ✅ اخذ نمایندگی کل استان و یا شهرستان: 
+        elif text == "ارتباط با ما 📧":
+            context.bot.send_message(
+                chat_id=user_id,
+                text=(
+                    "@Ahouraadmin01 \n"
+                    "@Abolfazl_lashkari ادمین های ما\n"
+                    "📞 09154039200 - لشکری\n"
+                    "📞 09051352153 - خسروانی"
+                ),
+            )
 
-        اشخاصی که در عرصه کسب و کار ، فعال می باشند در جستجوی این هستند که از رقیبان خود سبقت بگیرند تا بتوانند محصولات با کیفیت و خدمات بهتری را عرضه کنند.
+        else:
+            context.bot.send_message(
+                chat_id=user_id, text="دستور تعریف نشده 😶")
 
-        اخذ نمایندگی انحصاری و معتبر همیشه در اولویت قرار دارد، اخذ نمایندگی برندهای معتبر و اخذ نمایندگی انحصاری کار آسانی نمی باشد.
-
-        در زمان های گذشته می توانستید به راحتی از برندهای معتبر نمایندگی بگیرید ولی اکنون باید مذاکره های پیچیده و تخصصی داشته باشید تا بتوانید نمایندگی بگیرید.
-
-        نماینده: شخص حقوقی ایرانی که مطابق مفاد دارای قرارداد به عنوان نماینده فروش محصولات آن شرکت در استان یا شهرستان خود است.
-
-
-        ✅شرایط لازم جهت اخذ نمایندگی بازرگانی اهورا : 
-
-        ۱.داشتن تعهد به بازرگانی اهورا و مشتریان
-        ۲.داشتن حداقل امکانات
-        ۳.توانایی فروش
-        ۴.حفظ ارتباط با مشتری و بازرگانی
-
-
-        ✅مدارک لازم برای صدور گواهی فعالیت نمایندگی :
-
-        ۱.درخواست کتبی متقاضی دریافت اخذ نمایندگی 
-        ۲.تصویر برابر با اصل شناسنامه و کارت ملی
-        ۳.ادرس دقیق متقاضی
-
-        ✅ تعهدات نمایندگی
-        ۱. کلیه مسئولیت های کالا از زمان تحویل
-        ۲.فروش در سریع ترین زمان ممکن
-        ۳.پشتیبانی از محصولات
-        ۴.همکاری با کارشناسان فروش و ارائه گزارشات لازم
-
-        ✅روش فروش کالا
-        نمایندگی میتواند با استفاده از روش های زیر کالا را به فروش برساند
-
-        ۱.بازاریابی مدرن
-        ۲.فروش در فضای مجازی
-        ۳.فروش در بازار های محلی"""
-        context.bot.send_message(chat_id=user_id, text=faq_text)
-
-    elif update.message.text == "ارتباط با ما 📧":
+    except Exception as e:
+        # Catch any unexpected errors so bot never crashes
+        context.bot.logger.error(f"Error handling message: {e}", exc_info=True)
         context.bot.send_message(
-            chat_id=user_id, text="@Ahouraadmin01 \n @Abolfazl_lashkari ادمین های ما \n 09154039200 - لشکری \n 09051352153 - خسروانی")
+            chat_id=user_id, text="مشکلی پیش آمد. لطفا دوباره امتحان کنید ❗")
 
-    else:
-        context.bot.send_message(chat_id=user_id, text="دستور تعریف نشده 😶")
 
 def create_keyboard(buttons, category):
     return [
@@ -252,6 +283,7 @@ def create_keyboard(buttons, category):
             button), callback_data=f"{category}_{str(button).lower().replace(' ', '_')}") for button in row]
         for row in buttons
     ]
+
 
 def main():
     updater = Updater(TOKEN)
@@ -264,6 +296,7 @@ def main():
 
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == '__main__':
     main()
