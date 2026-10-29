@@ -1,0 +1,1 @@
+"""MinerBot Telegram product catalog."""

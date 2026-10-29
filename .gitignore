@@ -1,3 +1,11 @@
-/.env
-/venv
-/wvenv
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+wvenv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+dist/
