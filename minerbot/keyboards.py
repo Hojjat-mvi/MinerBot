@@ -6,9 +6,9 @@ from .config import Settings
 from .content import PRODUCTS
 from .catalog import Product
 
-TRAINING_LABEL = "آموزش کار با صرافی XT"
-FREE_LABEL = "اشتراک رایگان"
-MONTHLY_LABEL = "اشتراک ماهانه"
+TRAINING_LABEL = "🎓 آموزش کار با صرافی XT"
+FREE_LABEL = "🎁 اشتراک رایگان"
+MONTHLY_LABEL = "💳 اشتراک ماهانه"
 
 LIGHTNING_LABEL = "⚡ دستگاه‌های لایتنینگ"
 TRADE_LABEL = "📈 اتاق ترید اهورا ماین"
@@ -139,3 +139,10 @@ def trade_section_keyboard() -> InlineKeyboardMarkup:
         [button("↩️ بازگشت به اتاق ترید", "trade")],
         [button("🏠 منوی اصلی", "home")],
     ])
+
+
+def phone_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([
+        [KeyboardButton("📱 اشتراک‌گذاری شمارهٔ من", request_contact=True, style="success")],
+        [KeyboardButton("🏠 منوی اصلی")],
+    ], resize_keyboard=True, one_time_keyboard=True, is_persistent=False)

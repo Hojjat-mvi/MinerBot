@@ -12,5 +12,7 @@ COPY bot.py ./
 COPY minerbot/ ./minerbot/
 COPY asset/ ./asset/
 
+RUN mkdir -p /app/data && chown bot:bot /app/data && chmod 700 /app/data
+
 USER bot
 CMD ["python", "bot.py"]

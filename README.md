@@ -211,3 +211,31 @@ with a bold Persian VPN reminder. Free subscription uses the existing referral
 and total-deposit checks (not current balance). Training and monthly subscription
 are placeholders until content and pricing are supplied. Old menu text and
 `trade:check` callbacks remain supported; subsection navigation cancels UID input.
+
+## Trade phone registration
+
+Trade entry requires consent-based Telegram contact sharing in a private chat.
+The contact's `user_id` must match the sender; typed numbers, other people's
+contacts, expired requests, and unsolicited contacts are not saved. Registration
+lasts across restarts. Public-channel membership remains required. Lightning
+catalog access does not require a phone number. Existing users register once on
+their next trade entry; there is no database of prior phones to migrate.
+
+The SQLite database stores only Telegram user ID, normalized international phone,
+and consent/update timestamps. `/deletephone` removes the saved phone and gates
+trade entry again. The bot attempts to delete the contact message after saving;
+Telegram may prevent message deletion. Bot-database deletion does not erase any
+copies already retained by Telegram or previous operator backups.
+
+Docker mounts the named `bot_data` volume at `/app/data`. The database is
+`/app/data/contacts.sqlite3`, owned by the non-root bot user with mode 600.
+Source-only runs default to `data/contacts.sqlite3`; optional `DATA_DIR` changes
+that location. Local databases are excluded from Git and the Docker build context.
+Numbers are not included in normal bot logs or echoed back in chat. The database
+is not encrypted by the app: restrict host/backup access and protect VPS storage.
+
+Do not use `docker compose down -v` or remove the `minerbot_bot_data` volume:
+that deletes the contact database. Keep encrypted access-controlled backups;
+stop the bot while copying its database to obtain a consistent backup. There is
+no public phone-list/export endpoint. Administrators with server access can
+manage the SQLite database directly; do not publish it or commit it to Git.

@@ -2,7 +2,7 @@
 
 import unittest
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 from telegram.constants import ChatMemberStatus
@@ -136,7 +136,7 @@ class TradeFlowTests(unittest.IsolatedAsyncioTestCase):
                                    get_chat_member=AsyncMock(return_value=SimpleNamespace(status=ChatMemberStatus.MEMBER)))
         self.verifier = SimpleNamespace(verify=AsyncMock(return_value=Eligibility(True, True)))
         self.context = SimpleNamespace(bot=self.bot, user_data={},
-                                       bot_data={"settings": self.settings, "xt_verifier": self.verifier})
+                                       bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True)), "settings": self.settings, "xt_verifier": self.verifier})
         self.user = SimpleNamespace(id=42)
 
     async def callback(self, data):

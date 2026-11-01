@@ -103,3 +103,17 @@ can delay replies. Restarts reset pending UID conversations and cooldowns.
 XT history coverage/valuation needs confirmation. A live referred account below
 100 was tested; a live qualifying account has not yet been tested. The 10-channel
 model currently uses a text card. No remote deployment has been performed yet.
+
+## Phone database deployment
+
+The updated Compose file provisions `minerbot_bot_data` and mounts it writable
+at `/app/data`; the rest of the container remains read-only. The Dockerfile sets
+ownership for the bot's non-root user on first volume creation. A normal
+`git pull --ff-only origin main` plus `docker compose up -d --build bot` provisions
+this on first upgrade. No additional packages or database server are required.
+
+Preserve the Compose project name `minerbot` so updates reuse the same volume.
+Never use `down -v` or delete the data volume during upgrades. Rebuilding the
+image and recreating the container preserve saved contacts. Back up the database
+with the bot stopped and keep backups private. `/deletephone` removes the user's
+active record, but historical operator backups require a separate retention policy.

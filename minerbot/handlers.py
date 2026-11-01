@@ -15,10 +15,11 @@ from .keyboards import (
     PRODUCT_IDS, channel_keyboard, contact_keyboard, main_keyboard,
     navigation_keyboard, product_keyboard, persistent_menu_keyboard,
     lightning_menu_keyboard, trade_keyboard, trade_menu_keyboard, reward_keyboard, LIGHTNING_LABEL, TRADE_LABEL,
-    FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, trade_section_keyboard,
+    FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, trade_section_keyboard, phone_keyboard,
 )
 from .presentation import rtl_html
 from .xt import XTUnavailable, normalize_uid
+from .contacts import normalize_phone
 
 logger = logging.getLogger(__name__)
 HOME_TEXT = "🏠 به اهوراماین خوش آمدید\n\nیکی از دو بخش زیر را انتخاب کنید:\n⚡ دستگاه‌های لایتنینگ: معرفی، قیمت و درآمد دستگاه‌ها\n📈 ترید با اهوراماین: بررسی شرایط حساب XT"
@@ -53,6 +54,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user is None:
         return
     user_id = update.effective_user.id
+    context.user_data.pop("phone_requested_until", None)
     context.user_data.pop("trade_awaiting_uid", None)
     # Keep the persistent menu available while inline buttons handle details.
     await send_text(context, user_id,
@@ -89,6 +91,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if not await require_membership(context, user_id):
         return
     context.user_data.pop("trade_awaiting_uid", None)
+    context.user_data.pop("phone_requested_until", None)
     if data == "lightning":
         await send_text(context, user_id, LIGHTNING_TEXT, lightning_menu_keyboard())
         return
@@ -105,6 +108,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await send_text(context, user_id, HOME_TEXT, persistent_menu_keyboard())
         return
     if data == "home":
+        context.user_data.pop("phone_requested_until", None)
         await send_text(context, user_id, HOME_TEXT, persistent_menu_keyboard())
         return
     if data == "prices":
@@ -176,6 +180,9 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Accept buttons already sent during the user's earlier menu edits.
     text = {
         "🆓 اشتراک رایگان": FREE_LABEL,
+        "اشتراک رایگان": FREE_LABEL,
+        "آموزش کار با صرافی XT": TRAINING_LABEL,
+        "اشتراک ماهانه": MONTHLY_LABEL,
         "🧑🏻‍🏫 اموزش کار با صرافی": TRAINING_LABEL,
         "␚ اشتراک ماهانه": MONTHLY_LABEL,
         "📈 ترید با اهوراماین": TRADE_LABEL,
@@ -187,6 +194,10 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     product = PRODUCTS.get(text)
     if text in {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, "🏠 منوی اصلی"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
         context.user_data.pop("trade_awaiting_uid", None)
+        context.user_data.pop("phone_requested_until", None)
+    elif context.user_data.get("phone_requested_until"):
+        await require_trade_phone(context, user_id)
+        return
     elif context.user_data.get("trade_awaiting_uid"):
         await check_trade_uid(context, user_id, text)
         return
@@ -199,6 +210,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif text in {TRAINING_LABEL, MONTHLY_LABEL}:
         await show_trade_section(context, user_id, training=text == TRAINING_LABEL)
     elif text == "🏠 منوی اصلی":
+        context.user_data.pop("phone_requested_until", None)
         await send_text(context, user_id, HOME_TEXT, persistent_menu_keyboard())
     elif text == "💵 قیمت و درآمد دستگاه‌ها":
         await send_text(context, user_id, catalog_summary(), navigation_keyboard())
@@ -225,10 +237,13 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user and await require_membership(context, update.effective_user.id):
         context.user_data.pop("trade_awaiting_uid", None)
+        context.user_data.pop("phone_requested_until", None)
         await send_text(context, update.effective_user.id, HOME_TEXT, persistent_menu_keyboard())
 
 
 async def show_trade(context: ContextTypes.DEFAULT_TYPE, user_id: int, *, begin_check: bool = False) -> None:
+    if not await require_trade_phone(context, user_id):
+        return
     settings = settings_for(context)
     if not settings.xt_ready:
         await send_text(context, user_id,
@@ -248,6 +263,8 @@ async def show_trade(context: ContextTypes.DEFAULT_TYPE, user_id: int, *, begin_
 
 
 async def check_trade_uid(context: ContextTypes.DEFAULT_TYPE, user_id: int, text: str) -> None:
+    if not await require_trade_phone(context, user_id):
+        return
     now = time.monotonic()
     if now > context.user_data.get("trade_awaiting_uid", 0):
         context.user_data.pop("trade_awaiting_uid", None)
@@ -288,6 +305,8 @@ VPN_REMINDER = "لطفا vpn خودتون رو خاموش کنید"
 
 
 async def show_trade_room(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+    if not await require_trade_phone(context, user_id):
+        return
     await send_text(context, user_id,
                     "📈 اتاق ترید اهورا\n\n" + VPN_REMINDER +
                     "\n\nیکی از گزینه‌های زیر را انتخاب کنید:\n• آموزش کار با صرافی XT\n• اشتراک رایگان\n• اشتراک ماهانه",
@@ -295,9 +314,59 @@ async def show_trade_room(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> N
 
 
 async def show_trade_section(context: ContextTypes.DEFAULT_TYPE, user_id: int, *, training: bool) -> None:
+    if not await require_trade_phone(context, user_id):
+        return
     text = (
-        "آموزش کار با صرافی XT\n\nمحتوای آموزشی به‌زودی در این بخش قرار می‌گیرد. برای راهنمایی فعلاً با پشتیبانی تماس بگیرید."
+        "🎓 آموزش کار با صرافی XT\n\nمحتوای آموزشی به‌زودی در این بخش قرار می‌گیرد. برای راهنمایی فعلاً با پشتیبانی تماس بگیرید."
         if training else
-        "اشتراک ماهانه\n\nجزئیات و روش تهیهٔ اشتراک ماهانه هنوز اعلام نشده است. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید."
+        "💳 اشتراک ماهانه\n\nجزئیات و روش تهیهٔ اشتراک ماهانه هنوز اعلام نشده است. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید."
     )
     await send_text(context, user_id, text, trade_section_keyboard())
+
+
+async def require_trade_phone(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
+    if context.bot_data["contacts"].has_contact(user_id):
+        return True
+    context.user_data.pop("trade_awaiting_uid", None)
+    context.user_data["phone_requested_until"] = time.monotonic() + 600
+    await send_text(context, user_id,
+                    "📱 ثبت شماره برای ورود به اتاق ترید\n\nبرای استفاده از بخش ترید، شمارهٔ حساب تلگرام خود را با دکمهٔ زیر به اشتراک بگذارید.\nبا زدن دکمه، با ذخیرهٔ شماره در اهوراماین برای ثبت‌نام و پیگیری خدمات ترید موافقت می‌کنید.\nشماره را تایپ نکنید و مخاطب شخص دیگری را نفرستید.\n\nبرای حذف شمارهٔ ذخیره‌شده، دستور /deletephone را بفرستید. می‌توانید بدون ثبت شماره از بخش لایتنینگ استفاده کنید.",
+                    phone_keyboard())
+    return False
+
+
+async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = getattr(update, "effective_chat", None)
+    if chat is not None and chat.type != "private":
+        return
+    message, user = update.effective_message, update.effective_user
+    if message is None or user is None:
+        return
+    if not await require_membership(context, user.id):
+        return
+    if time.monotonic() > context.user_data.get("phone_requested_until", 0):
+        await send_text(context, user.id, "📱 ابتدا وارد اتاق ترید شوید و دکمهٔ اشتراک‌گذاری شماره را بزنید.", persistent_menu_keyboard())
+        return
+    contact = message.contact
+    if contact is None or contact.user_id != user.id or not normalize_phone(contact.phone_number):
+        await send_text(context, user.id, "⚠️ لطفاً فقط شمارهٔ حساب خود را با دکمهٔ «اشتراک‌گذاری شمارهٔ من» ارسال کنید.", phone_keyboard())
+        return
+    context.bot_data["contacts"].save(user.id, contact.phone_number)
+    context.user_data.pop("phone_requested_until", None)
+    # Remove the contact message from the chat when Telegram permits it.
+    try:
+        await message.delete()
+    except TelegramError:
+        pass
+    await send_text(context, user.id, "✅ شمارهٔ شما ثبت شد.", trade_menu_keyboard())
+    await show_trade_room(context, user.id)
+
+
+async def delete_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_user is None:
+        return
+    user_id = update.effective_user.id
+    context.bot_data["contacts"].delete(user_id)
+    context.user_data.pop("phone_requested_until", None)
+    context.user_data.pop("trade_awaiting_uid", None)
+    await send_text(context, user_id, "🗑 شمارهٔ ذخیره‌شدهٔ شما حذف شد. برای ورود دوباره به ترید باید شماره را به اشتراک بگذارید.", persistent_menu_keyboard())

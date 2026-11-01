@@ -6,6 +6,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      - bot_data:/app/data
     init: true
     mem_limit: 256m
     cpus: 0.5
@@ -21,3 +25,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  bot_data:

@@ -15,6 +15,7 @@ ASSET_DIR = BASE_DIR / "asset"
 @dataclass(frozen=True)
 class Settings:
     token: str = field(repr=False)
+    data_dir: Path = BASE_DIR / "data"
     required_channel_id: str = "@Ahuraminenode"
     channel_url: str = "https://t.me/Ahuraminenode"
     additional_channel_ids: tuple[str, ...] = ("@ahuramine",)
@@ -53,6 +54,7 @@ def load_settings() -> Settings:
             raise ValueError("XT_REWARD_CHANNEL_URL must be a private Telegram invite URL (https://t.me/+...).")
     return Settings(
         token=token,
+        data_dir=Path(os.getenv("DATA_DIR", str(BASE_DIR / "data"))).expanduser().resolve(),
         required_channel_id=os.getenv("REQUIRED_CHANNEL_ID", "@Ahuraminenode"),
         channel_url=os.getenv("CHANNEL_URL", "https://t.me/Ahuraminenode"),
         xt_api_key=os.getenv("XT_API_KEY", "").strip(),

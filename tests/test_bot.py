@@ -3,7 +3,7 @@
 import os
 import unittest
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from telegram.constants import ChatMemberStatus
 
@@ -33,7 +33,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_application_builds_without_network(self):
         application = build_application(Settings(token="123:fake-token"))
-        self.assertEqual(len(application.handlers[0]), 4)
+        self.assertEqual(len(application.handlers[0]), 6)
         self.assertTrue(application.error_handlers)
 
 
@@ -44,7 +44,7 @@ class HandlerTests(unittest.IsolatedAsyncioTestCase):
             get_chat_member=AsyncMock(),
         )
         self.bot.get_chat_member.return_value = SimpleNamespace(status=ChatMemberStatus.MEMBER)
-        self.context = SimpleNamespace(bot=self.bot, user_data={}, bot_data={"settings": Settings(token="123:fake-token")})
+        self.context = SimpleNamespace(bot=self.bot, user_data={}, bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True)), "settings": Settings(token="123:fake-token")})
         self.user = SimpleNamespace(id=42)
 
     def callback_update(self, data):
