@@ -207,7 +207,7 @@ controlled channel admission. These are not provided by the XT UID endpoints.
 ### Trade-room sections
 
 The trade room offers XT training, free subscription, and monthly subscription,
-with a bold Persian VPN reminder. Free subscription uses the existing referral
+with a bold Persian VPN reminder on the free-subscription screen. Free subscription uses the existing referral
 and total-deposit checks (not current balance). Training and monthly subscription
 are placeholders until content and pricing are supplied. Old menu text and
 `trade:check` callbacks remain supported; subsection navigation cancels UID input.

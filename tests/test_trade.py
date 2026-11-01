@@ -290,7 +290,7 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
             sent = self.bot.send_message.call_args.kwargs
             labels = [button.text for row in sent["reply_markup"].keyboard for button in row]
             self.assertEqual(labels, [TRAINING_LABEL, FREE_LABEL, MONTHLY_LABEL, "🏠 منوی اصلی"])
-            self.assertIn("<b>\u200fلطفا \u2066vpn\u2069 خودتون رو خاموش کنید</b>", sent["text"])
+            self.assertNotIn("vpn", sent["text"])
             self.assertEqual(sent["parse_mode"], "HTML")
             self.verifier.verify.assert_not_awaited()
 
@@ -310,7 +310,12 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
     async def test_free_subscription_keeps_existing_uid_check(self):
         from minerbot.keyboards import FREE_LABEL
         await self.text(FREE_LABEL)
-        markup = self.bot.send_message.call_args.kwargs["reply_markup"]
+        sent = self.bot.send_message.call_args.kwargs
+        self.assertIn("<b>\u200fلطفا \u2066vpn\u2069 خود را خاموش کنید</b>", sent["text"])
+        self.assertIn("حساب خود را ۱۰۰ دلار شارژ کنید", sent["text"])
+        self.assertIn("گزینه بررسی شرایط حساب را بزنید", sent["text"])
+        self.assertIn("حساب صرافی خودتان را ارسال کنید", sent["text"])
+        markup = sent["reply_markup"]
         self.assertIn("trade:check", {button.callback_data for row in markup.inline_keyboard for button in row})
         await self.callback("trade:check")
         await self.text("123456")

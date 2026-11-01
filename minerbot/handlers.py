@@ -257,9 +257,12 @@ async def show_trade(context: ContextTypes.DEFAULT_TYPE, user_id: int, *, begin_
                         trade_keyboard(settings_for(context).xt_referral_url))
     else:
         await send_text(context, user_id,
-                        "📈 ترید با اهوراماین\n\nشرایط بررسی حساب:\n• ثبت‌نام با کد دعوت اهوراماین: " + settings.xt_referral_code +
-                        "\n• مجموع واریز ثبت‌شده حداقل ۱۰۰ USDT\n\nبرای بررسی، دکمهٔ زیر را بزنید و UID خود را ارسال کنید.",
-                        trade_keyboard(settings_for(context).xt_referral_url))
+                        "🎁 اشتراک رایگان\n\n" + VPN_REMINDER +
+                        "\n\n🔗 با لینک زیر داخل صرافی xt ثبت نام کنید و بعد از ثبت نام حساب خود را ۱۰۰ دلار شارژ کنید" +
+                        "\nکد دعوت اهوراماین: " + settings.xt_referral_code +
+                        "\n\n🔎 برای دریافت اشتراک رایگان گزینه بررسی شرایط حساب را بزنید و بعد UID حساب صرافی خودتان را ارسال کنید" +
+                        "\n\n✅ شرایط تأیید: ثبت‌نام با کد دعوت اهوراماین و مجموع واریز حداقل ۱۰۰ USDT.",
+                        trade_keyboard(settings.xt_referral_url), bold_lines=(VPN_REMINDER,))
 
 
 async def check_trade_uid(context: ContextTypes.DEFAULT_TYPE, user_id: int, text: str) -> None:
@@ -301,16 +304,15 @@ async def check_trade_uid(context: ContextTypes.DEFAULT_TYPE, user_id: int, text
     await send_text(context, user_id, text, trade_keyboard(settings_for(context).xt_referral_url))
 
 
-VPN_REMINDER = "لطفا vpn خودتون رو خاموش کنید"
+VPN_REMINDER = "لطفا vpn خود را خاموش کنید"
 
 
 async def show_trade_room(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
     if not await require_trade_phone(context, user_id):
         return
     await send_text(context, user_id,
-                    "📈 اتاق ترید اهورا\n\n" + VPN_REMINDER +
-                    "\n\nیکی از گزینه‌های زیر را انتخاب کنید:\n• آموزش کار با صرافی XT\n• اشتراک رایگان\n• اشتراک ماهانه",
-                    trade_menu_keyboard(), bold_lines=(VPN_REMINDER,))
+                    "📈 اتاق ترید اهورا\n\nیکی از گزینه‌های زیر را انتخاب کنید:\n• 🎓 آموزش کار با صرافی XT\n• 🎁 اشتراک رایگان\n• 💳 اشتراک ماهانه",
+                    trade_menu_keyboard())
 
 
 async def show_trade_section(context: ContextTypes.DEFAULT_TYPE, user_id: int, *, training: bool) -> None:
