@@ -6,6 +6,13 @@ from .config import Settings
 from .content import PRODUCTS
 from .catalog import Product
 
+TRAINING_LABEL = "آموزش کار با صرافی XT"
+FREE_LABEL = "اشتراک رایگان"
+MONTHLY_LABEL = "اشتراک ماهانه"
+
+LIGHTNING_LABEL = "⚡ دستگاه‌های لایتنینگ"
+TRADE_LABEL = "📈 اتاق ترید اهورا ماین"
+
 PRODUCT_IDS = {product["order_callback"].removeprefix("order_delivery"): label for label, product in PRODUCTS.items()}
 
 
@@ -78,8 +85,17 @@ def lightning_menu_keyboard() -> ReplyKeyboardMarkup:
        input_field_placeholder="یک دستگاه یا گزینه را انتخاب کنید…")
 
 
-LIGHTNING_LABEL = "⚡ دستگاه‌های لایتنینگ"
-TRADE_LABEL = "📈 ترید با اهوراماین"
+def trade_menu_keyboard() -> ReplyKeyboardMarkup:
+    """Show trade shortcuts while allowing Telegram to dismiss the keyboard."""
+    return ReplyKeyboardMarkup([
+        [KeyboardButton(TRAINING_LABEL, style="primary")],
+        [KeyboardButton(FREE_LABEL, style="success")],
+        [KeyboardButton(MONTHLY_LABEL)],
+        [KeyboardButton("🏠 منوی اصلی")],
+    ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False,
+       input_field_placeholder="یک گزینه را انتخاب کنید…")
+
+
 
 
 def main_keyboard() -> InlineKeyboardMarkup:
@@ -103,6 +119,7 @@ def trade_keyboard(referral_url: str = "") -> InlineKeyboardMarkup:
         rows.append([InlineKeyboardButton("🔗 ثبت‌نام با کد اهوراماین", url=referral_url, style="primary")])
     return InlineKeyboardMarkup(rows + [
         [button("🔎 بررسی شرایط حساب XT", "trade:check", "success")],
+        [button("↩️ بازگشت به اتاق ترید", "trade")],
         [button("💬 ارتباط با پشتیبانی", "contact")],
         [button("🏠 منوی اصلی", "home")],
     ])
@@ -112,5 +129,13 @@ def reward_keyboard(invite_url: str) -> InlineKeyboardMarkup:
     """Only attach this keyboard after a fresh successful XT eligibility check."""
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🎁 عضویت در کانال خصوصی اهوراماین", url=invite_url, style="success")],
+        [button("🏠 منوی اصلی", "home")],
+    ])
+
+
+def trade_section_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [button("💬 ارتباط با پشتیبانی", "contact")],
+        [button("↩️ بازگشت به اتاق ترید", "trade")],
         [button("🏠 منوی اصلی", "home")],
     ])

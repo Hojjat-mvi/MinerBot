@@ -274,5 +274,70 @@ class RewardTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(link, str(self.bot.send_message.call_args.kwargs))
 
 
+
+class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
+    setUp = TradeFlowTests.setUp
+    callback = TradeFlowTests.callback
+    text = TradeFlowTests.text
+
+    async def test_room_shows_three_sections_from_text_and_callback(self):
+        from minerbot.keyboards import TRAINING_LABEL, FREE_LABEL, MONTHLY_LABEL
+        for entry in ["text", "callback"]:
+            if entry == "text":
+                await self.text(TRADE_LABEL)
+            else:
+                await self.callback("trade")
+            sent = self.bot.send_message.call_args.kwargs
+            labels = [button.text for row in sent["reply_markup"].keyboard for button in row]
+            self.assertEqual(labels, [TRAINING_LABEL, FREE_LABEL, MONTHLY_LABEL, "🏠 منوی اصلی"])
+            self.assertIn("<b>\u200fلطفا \u2066vpn\u2069 خودتون رو خاموش کنید</b>", sent["text"])
+            self.assertEqual(sent["parse_mode"], "HTML")
+            self.verifier.verify.assert_not_awaited()
+
+    async def test_subsection_callbacks_do_not_trigger_verification(self):
+        for data in ["trade:free", "trade:training", "trade:monthly"]:
+            await self.callback(data)
+            self.assertNotIn("گزینه پیدا نشد", self.bot.send_message.call_args.kwargs["text"])
+        self.verifier.verify.assert_not_awaited()
+
+    def test_emphasized_lines_are_escaped_without_nested_bold(self):
+        from minerbot.presentation import rtl_html
+        result = rtl_html("عنوان\n<b>متن</b>", bold_lines=("عنوان", "<b>متن</b>"))
+        self.assertNotIn("<b><b>", result)
+        self.assertIn("&lt;b&gt;", result.replace("\u2066", "").replace("\u2069", ""))
+        self.assertEqual(result.count("<b>"), 2)
+
+    async def test_free_subscription_keeps_existing_uid_check(self):
+        from minerbot.keyboards import FREE_LABEL
+        await self.text(FREE_LABEL)
+        markup = self.bot.send_message.call_args.kwargs["reply_markup"]
+        self.assertIn("trade:check", {button.callback_data for row in markup.inline_keyboard for button in row})
+        await self.callback("trade:check")
+        await self.text("123456")
+        self.verifier.verify.assert_awaited_once_with("123456")
+
+    async def test_section_buttons_cancel_uid_input(self):
+        from minerbot.keyboards import TRAINING_LABEL, MONTHLY_LABEL
+        for label in [TRAINING_LABEL, MONTHLY_LABEL]:
+            await self.callback("trade:check")
+            await self.text(label)
+            self.assertNotIn("trade_awaiting_uid", self.context.user_data)
+            markup = self.bot.send_message.call_args.kwargs["reply_markup"]
+            self.assertIn("trade", {button.callback_data for row in markup.inline_keyboard for button in row})
+        self.verifier.verify.assert_not_awaited()
+
+    async def test_legacy_labels_with_whitespace_still_route(self):
+        for label in ["🆓 اشتراک رایگان ", "🧑🏻‍🏫 اموزش کار با صرافی", "␚ اشتراک ماهانه"]:
+            await self.text(label)
+            self.assertNotIn("گزینه پیدا نشد", self.bot.send_message.call_args.kwargs["text"])
+
+    async def test_room_is_available_without_xt_configuration(self):
+        self.context.bot_data["settings"] = Settings(token="fake")
+        await self.text(TRADE_LABEL)
+        self.assertIsNotNone(self.bot.send_message.call_args.kwargs["reply_markup"].keyboard)
+        await self.text("اشتراک رایگان")
+        self.assertIn("هنوز فعال نشده", self.bot.send_message.call_args.kwargs["text"])
+
+
 if __name__ == "__main__":
     unittest.main()

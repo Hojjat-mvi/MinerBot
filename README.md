@@ -138,7 +138,7 @@ only to `https://api.xt.com`, with signed GET requests and redirects disabled.
 No XT trade, transfer, or withdrawal API is implemented. If any setting is
 missing, the trade screen clearly reports that verification is not yet active.
 
-The user chooses Trade → Check account → enters their UID. The bot:
+The user chooses Trade room → Free subscription → Check account → enters their UID. The bot:
 
 1. Calls `GET /v4/referal/invite/check` with that UID.
 2. Calls `GET /v4/referal/invite/single/user/info` and compares
@@ -203,3 +203,11 @@ This is a shareable static invite, not identity binding or single-use admission.
 People may submit someone else's eligible UID or forward the invite. Before
 using this as strict access control, add account-ownership verification and
 controlled channel admission. These are not provided by the XT UID endpoints.
+
+### Trade-room sections
+
+The trade room offers XT training, free subscription, and monthly subscription,
+with a bold Persian VPN reminder. Free subscription uses the existing referral
+and total-deposit checks (not current balance). Training and monthly subscription
+are placeholders until content and pricing are supplied. Old menu text and
+`trade:check` callbacks remain supported; subsection navigation cancels UID input.

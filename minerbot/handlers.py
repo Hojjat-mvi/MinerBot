@@ -14,7 +14,8 @@ from .content import CALLBACK_TEXTS, MENU_TEXTS, PRODUCTS, SETUP_VIDEOS
 from .keyboards import (
     PRODUCT_IDS, channel_keyboard, contact_keyboard, main_keyboard,
     navigation_keyboard, product_keyboard, persistent_menu_keyboard,
-    lightning_menu_keyboard, trade_keyboard, reward_keyboard, LIGHTNING_LABEL, TRADE_LABEL,
+    lightning_menu_keyboard, trade_keyboard, trade_menu_keyboard, reward_keyboard, LIGHTNING_LABEL, TRADE_LABEL,
+    FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, trade_section_keyboard,
 )
 from .presentation import rtl_html
 from .xt import XTUnavailable, normalize_uid
@@ -29,9 +30,9 @@ def settings_for(context: ContextTypes.DEFAULT_TYPE) -> Settings:
     return context.bot_data["settings"]
 
 
-async def send_text(context: ContextTypes.DEFAULT_TYPE, user_id: int, text: str, keyboard) -> None:
+async def send_text(context: ContextTypes.DEFAULT_TYPE, user_id: int, text: str, keyboard, *, bold_lines: tuple[str, ...] = ()) -> None:
     await context.bot.send_message(
-        chat_id=user_id, text=rtl_html(text), parse_mode=ParseMode.HTML, reply_markup=keyboard,
+        chat_id=user_id, text=rtl_html(text, bold_lines=bold_lines), parse_mode=ParseMode.HTML, reply_markup=keyboard,
     )
 
 
@@ -91,8 +92,14 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if data == "lightning":
         await send_text(context, user_id, LIGHTNING_TEXT, lightning_menu_keyboard())
         return
-    if data in {"trade", "trade:check"}:
+    if data == "trade":
+        await show_trade_room(context, user_id)
+        return
+    if data in {"trade:free", "trade:check"}:
         await show_trade(context, user_id, begin_check=data == "trade:check")
+        return
+    if data in {"trade:training", "trade:monthly"}:
+        await show_trade_section(context, user_id, training=data == "trade:training")
         return
     if data == "check_channel":
         await send_text(context, user_id, HOME_TEXT, persistent_menu_keyboard())
@@ -165,12 +172,20 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if update.effective_message is None or update.effective_user is None:
         return
     user_id = update.effective_user.id
-    text = update.effective_message.text or ""
+    text = (update.effective_message.text or "").strip()
+    # Accept buttons already sent during the user's earlier menu edits.
+    text = {
+        "🆓 اشتراک رایگان": FREE_LABEL,
+        "🧑🏻‍🏫 اموزش کار با صرافی": TRAINING_LABEL,
+        "␚ اشتراک ماهانه": MONTHLY_LABEL,
+        "📈 ترید با اهوراماین": TRADE_LABEL,
+        "اتاق ترید اهورا": TRADE_LABEL,
+    }.get(text, text)
     if not await require_membership(context, user_id):
         return
     # Keep existing reply-keyboard messages working during the UI transition.
     product = PRODUCTS.get(text)
-    if text in {LIGHTNING_LABEL, TRADE_LABEL, "🏠 منوی اصلی"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
+    if text in {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, "🏠 منوی اصلی"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
         context.user_data.pop("trade_awaiting_uid", None)
     elif context.user_data.get("trade_awaiting_uid"):
         await check_trade_uid(context, user_id, text)
@@ -178,7 +193,11 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if text == LIGHTNING_LABEL:
         await send_text(context, user_id, LIGHTNING_TEXT, lightning_menu_keyboard())
     elif text == TRADE_LABEL:
+        await show_trade_room(context, user_id)
+    elif text == FREE_LABEL:
         await show_trade(context, user_id)
+    elif text in {TRAINING_LABEL, MONTHLY_LABEL}:
+        await show_trade_section(context, user_id, training=text == TRAINING_LABEL)
     elif text == "🏠 منوی اصلی":
         await send_text(context, user_id, HOME_TEXT, persistent_menu_keyboard())
     elif text == "💵 قیمت و درآمد دستگاه‌ها":
@@ -263,3 +282,22 @@ async def check_trade_uid(context: ContextTypes.DEFAULT_TYPE, user_id: int, text
             return
         text = "✅ شرایط حساب تأیید شد\n\nکد دعوت اهوراماین و مجموع واریز حداقل ۱۰۰ USDT تأیید شد.\n🎁 شرایط دریافت پاداش را دارید؛ لینک کانال خصوصی هنوز آماده نشده است. لطفاً بعداً دوباره بررسی کنید."
     await send_text(context, user_id, text, trade_keyboard(settings_for(context).xt_referral_url))
+
+
+VPN_REMINDER = "لطفا vpn خودتون رو خاموش کنید"
+
+
+async def show_trade_room(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+    await send_text(context, user_id,
+                    "📈 اتاق ترید اهورا\n\n" + VPN_REMINDER +
+                    "\n\nیکی از گزینه‌های زیر را انتخاب کنید:\n• آموزش کار با صرافی XT\n• اشتراک رایگان\n• اشتراک ماهانه",
+                    trade_menu_keyboard(), bold_lines=(VPN_REMINDER,))
+
+
+async def show_trade_section(context: ContextTypes.DEFAULT_TYPE, user_id: int, *, training: bool) -> None:
+    text = (
+        "آموزش کار با صرافی XT\n\nمحتوای آموزشی به‌زودی در این بخش قرار می‌گیرد. برای راهنمایی فعلاً با پشتیبانی تماس بگیرید."
+        if training else
+        "اشتراک ماهانه\n\nجزئیات و روش تهیهٔ اشتراک ماهانه هنوز اعلام نشده است. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید."
+    )
+    await send_text(context, user_id, text, trade_section_keyboard())
