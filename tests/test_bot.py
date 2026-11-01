@@ -44,7 +44,7 @@ class HandlerTests(unittest.IsolatedAsyncioTestCase):
             get_chat_member=AsyncMock(),
         )
         self.bot.get_chat_member.return_value = SimpleNamespace(status=ChatMemberStatus.MEMBER)
-        self.context = SimpleNamespace(bot=self.bot, user_data={}, bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True)), "settings": Settings(token="123:fake-token")})
+        self.context = SimpleNamespace(bot=self.bot, user_data={}, bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True), save_uid=Mock()), "settings": Settings(token="123:fake-token")})
         self.user = SimpleNamespace(id=42)
 
     def callback_update(self, data):
@@ -119,6 +119,11 @@ class PresentationTests(unittest.TestCase):
         self.assertIn("&amp;", rendered)
         self.assertNotIn("<test>", rendered)
         self.assertTrue(rendered.splitlines()[1].startswith("\u200f"))
+
+    def test_signed_performance_amounts_keep_sign_inside_ltr_isolate(self):
+        rendered = rtl_html("گزارش\nسود: +4,325.73\nضرر: -850")
+        self.assertIn("\u2066+4,325.73\u2069", rendered)
+        self.assertIn("\u2066-850\u2069", rendered)
 
     def test_source_url_is_not_split_by_direction_marks(self):
         url = "https://ahuraminer.com/products/lightning-nodes"

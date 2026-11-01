@@ -3,12 +3,14 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
 from .config import Settings
-from .content import PRODUCTS, SUPPORT_CONTACTS, SALES_CONTACTS
+from .content import PRODUCTS, SUPPORT_CONTACTS, SALES_CONTACTS, TRADE_SUPPORT_USERNAME
 from .catalog import Product
 
 TRAINING_LABEL = "🎓 آموزش کار با صرافی XT"
-FREE_LABEL = "🎁 اشتراک رایگان"
-MONTHLY_LABEL = "💳 اشتراک ماهانه"
+FREE_LABEL = "🎁 عضویت رایگان کانال VIP"
+MONTHLY_LABEL = "💳 اشتراک با پرداخت هزینه"
+SUBSCRIPTIONS_LABEL = "🎟 دریافت اشتراک"
+RESULTS_LABEL = "📊 برآیند معاملات"
 
 LIGHTNING_LABEL = "⚡ دستگاه‌های لایتنینگ"
 TRADE_LABEL = "📈 اتاق ترید اهورا ماین"
@@ -94,9 +96,9 @@ def lightning_menu_keyboard() -> ReplyKeyboardMarkup:
 def trade_menu_keyboard() -> ReplyKeyboardMarkup:
     """Show trade shortcuts while allowing Telegram to dismiss the keyboard."""
     return ReplyKeyboardMarkup([
-        [KeyboardButton(TRAINING_LABEL, style="primary")],
-        [KeyboardButton(FREE_LABEL, style="success")],
-        [KeyboardButton(MONTHLY_LABEL)],
+        [KeyboardButton(SUBSCRIPTIONS_LABEL, style="success")],
+        [KeyboardButton(RESULTS_LABEL, style="primary")],
+        [KeyboardButton(TRAINING_LABEL)],
         [KeyboardButton("🏠 منوی اصلی")],
     ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False,
        input_field_placeholder="یک گزینه را انتخاب کنید…")
@@ -125,8 +127,9 @@ def trade_keyboard(referral_url: str = "") -> InlineKeyboardMarkup:
         rows.append([InlineKeyboardButton("🔗 ثبت‌نام با کد اهوراماین", url=referral_url, style="primary")])
     return InlineKeyboardMarkup(rows + [
         [button("🔎 بررسی شرایط حساب XT", "trade:check", "success")],
+        [button("↩️ دریافت اشتراک", "trade:subscriptions")],
         [button("↩️ بازگشت به اتاق ترید", "trade")],
-        [button("💬 ارتباط با پشتیبانی", "contact")],
+        [InlineKeyboardButton("💬 پشتیبانی", url=f"https://t.me/{TRADE_SUPPORT_USERNAME}", style="success")],
         [button("🏠 منوی اصلی", "home")],
     ])
 
@@ -141,7 +144,7 @@ def reward_keyboard(invite_url: str) -> InlineKeyboardMarkup:
 
 def trade_section_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [button("💬 ارتباط با پشتیبانی", "contact")],
+        [InlineKeyboardButton("💬 پشتیبانی", url=f"https://t.me/{TRADE_SUPPORT_USERNAME}", style="success")],
         [button("↩️ بازگشت به اتاق ترید", "trade")],
         [button("🏠 منوی اصلی", "home")],
     ])
@@ -155,11 +158,18 @@ def phone_keyboard() -> ReplyKeyboardMarkup:
 
 
 def subscription_keyboard() -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton(f"💬 دریافت اشتراک · @{username}", url=f"https://t.me/{username}", style="success")]
-        for username, _ in SUPPORT_CONTACTS
-    ]
-    return InlineKeyboardMarkup(rows + [
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("💬 پشتیبانی", url=f"https://t.me/{TRADE_SUPPORT_USERNAME}", style="success")],
+        [button("↩️ دریافت اشتراک", "trade:subscriptions")],
         [button("↩️ بازگشت به اتاق ترید", "trade")],
         [button("🏠 منوی اصلی", "home")],
     ])
+
+
+def subscription_menu_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([
+        [KeyboardButton(FREE_LABEL, style="success")],
+        [KeyboardButton(MONTHLY_LABEL, style="primary")],
+        [KeyboardButton(TRADE_LABEL)],
+        [KeyboardButton("🏠 منوی اصلی")],
+    ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False)

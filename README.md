@@ -221,8 +221,8 @@ lasts across restarts. Public-channel membership remains required. Lightning
 catalog access does not require a phone number. Existing users register once on
 their next trade entry; there is no database of prior phones to migrate.
 
-The SQLite database stores only Telegram user ID, normalized international phone,
-and consent/update timestamps. `/deletephone` removes the saved phone and gates
+The SQLite database stores Telegram user ID, normalized international phone,
+consent/update timestamps, and the submitted XT UID with its latest check status. `/deletephone` removes the saved phone and gates
 trade entry again. The bot attempts to delete the contact message after saving;
 Telegram may prevent message deletion. Bot-database deletion does not erase any
 copies already retained by Telegram or previous operator backups.
@@ -239,3 +239,32 @@ that deletes the contact database. Keep encrypted access-controlled backups;
 stop the bot while copying its database to obtain a consistent backup. There is
 no public phone-list/export endpoint. Administrators with server access can
 manage the SQLite database directly; do not publish it or commit it to Git.
+
+## Subscription navigation and saved exchange UIDs
+
+Trade-room menu order: دریافت اشتراک → برآیند معاملات → آموزش کار با صرافی XT.
+The subscription submenu contains عضویت رایگان کانال VIP and اشتراک با پرداخت هزینه.
+The results screen is a placeholder until reports are provided.
+
+A valid submitted XT UID is saved on the registered contact row before its API
+check, together with the latest result (`submitted`, `unavailable`, `not_referred`,
+`below_threshold`, or `eligible`) and last check-attempt time. A new UID replaces
+the previous one for that Telegram account. No raw financial records are stored.
+These are self-reported UIDs, not verified account ownership. API errors remain
+unavailable and never approve rewards. The user is informed before UID entry.
+
+Existing SQLite phone databases migrate automatically by adding nullable UID
+columns, without replacing phone rows. Back up the database before deploying a
+schema change. `/deletephone` deletes the whole contact row, including its UID.
+The existing persistent Docker volume and backup requirements still apply.
+
+### Trade performance and trade support
+
+The performance screen displays the supplied 45-day report with a bold period
+heading; it is manually maintained content, not a live exchange performance feed.
+Trade support has a single destination, `@Ahurasupport_trading`, including the
+paid-subscription screen, account-check screens, and trade-specific errors.
+Existing support/sales contacts are retained only in the Lightning section.
+Configure the private VIP reward invite in `XT_REWARD_CHANNEL_URL` on each running
+machine; it is never stored in source or `.env.example`. Rewards remain gated by
+a fresh successful referral and deposit check.

@@ -51,7 +51,10 @@ class XTTests(unittest.IsolatedAsyncioTestCase):
         from minerbot.keyboards import trade_keyboard
         link = "https://www.xtfarsi.net/ref/7YX74I"
         self.assertEqual(trade_keyboard(link).inline_keyboard[0][0].url, link)
-        self.assertFalse(any(button.url for row in trade_keyboard().inline_keyboard for button in row))
+        self.assertEqual(
+            {button.url for row in trade_keyboard().inline_keyboard for button in row if button.url},
+            {"https://t.me/Ahurasupport_trading"},
+        )
 
     def test_uid_normalization(self):
         self.assertEqual(normalize_uid(" ۱۲۳۴۵۶ "), "123456")
@@ -136,7 +139,7 @@ class TradeFlowTests(unittest.IsolatedAsyncioTestCase):
                                    get_chat_member=AsyncMock(return_value=SimpleNamespace(status=ChatMemberStatus.MEMBER)))
         self.verifier = SimpleNamespace(verify=AsyncMock(return_value=Eligibility(True, True)))
         self.context = SimpleNamespace(bot=self.bot, user_data={},
-                                       bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True)), "settings": self.settings, "xt_verifier": self.verifier})
+                                       bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True), save_uid=Mock()), "settings": self.settings, "xt_verifier": self.verifier})
         self.user = SimpleNamespace(id=42)
 
     async def callback(self, data):
@@ -281,7 +284,7 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
     text = TradeFlowTests.text
 
     async def test_room_shows_three_sections_from_text_and_callback(self):
-        from minerbot.keyboards import TRAINING_LABEL, FREE_LABEL, MONTHLY_LABEL
+        from minerbot.keyboards import TRAINING_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL
         for entry in ["text", "callback"]:
             if entry == "text":
                 await self.text(TRADE_LABEL)
@@ -289,7 +292,7 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
                 await self.callback("trade")
             sent = self.bot.send_message.call_args.kwargs
             labels = [button.text for row in sent["reply_markup"].keyboard for button in row]
-            self.assertEqual(labels, [TRAINING_LABEL, FREE_LABEL, MONTHLY_LABEL, "🏠 منوی اصلی"])
+            self.assertEqual(labels, [SUBSCRIPTIONS_LABEL, RESULTS_LABEL, TRAINING_LABEL, "🏠 منوی اصلی"])
             self.assertNotIn("vpn", sent["text"])
             self.assertEqual(sent["parse_mode"], "HTML")
             self.verifier.verify.assert_not_awaited()
@@ -357,7 +360,11 @@ class SubscriptionContactTests(unittest.IsolatedAsyncioTestCase):
         for amount in ["۱۰۰", "۲۵۰", "۴۰۰", "۷۰۰"]:
             self.assertIn(amount + " دلار", sent["text"])
         urls = {button.url for row in sent["reply_markup"].inline_keyboard for button in row if button.url}
-        self.assertEqual(urls, {"https://t.me/" + username for username, _ in SUPPORT_CONTACTS})
+        self.assertEqual(urls, {"https://t.me/Ahurasupport_trading"})
+        self.assertIn("Ahurasupport_trading", sent["text"])
+        for username, phone in SUPPORT_CONTACTS:
+            self.assertNotIn(username, sent["text"])
+            self.assertNotIn(phone, sent["text"])
         for username, _ in SALES_CONTACTS:
             self.assertNotIn("https://t.me/" + username, urls)
 
@@ -370,6 +377,77 @@ class SubscriptionContactTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn(username, sent["text"])
             self.assertIn(phone, sent["text"])
             self.assertIn("https://t.me/" + username, urls)
+
+
+
+class NestedSubscriptionTests(unittest.IsolatedAsyncioTestCase):
+    setUp = TradeFlowTests.setUp
+    callback = TradeFlowTests.callback
+    text = TradeFlowTests.text
+
+    async def test_subscription_menu_contains_both_renamed_options(self):
+        from minerbot.keyboards import SUBSCRIPTIONS_LABEL, FREE_LABEL, MONTHLY_LABEL
+        for entry in ["text", "callback"]:
+            if entry == "text":
+                await self.text(SUBSCRIPTIONS_LABEL)
+            else:
+                await self.callback("trade:subscriptions")
+            labels = [b.text for row in self.bot.send_message.call_args.kwargs["reply_markup"].keyboard for b in row]
+            self.assertEqual(labels[:2], [FREE_LABEL, MONTHLY_LABEL])
+
+    async def test_results_navigation_cancels_uid_input(self):
+        from minerbot.keyboards import RESULTS_LABEL
+        await self.callback("trade:check")
+        await self.text(RESULTS_LABEL)
+        self.assertNotIn("trade_awaiting_uid", self.context.user_data)
+        self.assertIn("Trading Performance", self.bot.send_message.call_args.kwargs["text"])
+        self.verifier.verify.assert_not_awaited()
+
+    async def test_uid_saved_with_result_status(self):
+        await self.callback("trade:check")
+        await self.text("۱۲۳۴۵۶")
+        saved = self.context.bot_data["contacts"].save_uid
+        saved.assert_any_call(42, "123456", status="submitted")
+        saved.assert_any_call(42, "123456", status="eligible")
+
+    async def test_api_failure_saves_unavailable_without_eligibility(self):
+        self.verifier.verify.side_effect = XTUnavailable()
+        await self.callback("trade:check")
+        await self.text("123456")
+        self.context.bot_data["contacts"].save_uid.assert_called_with(42, "123456", status="unavailable")
+
+
+
+class TradeSupportPerformanceTests(unittest.IsolatedAsyncioTestCase):
+    setUp = TradeFlowTests.setUp
+    callback = TradeFlowTests.callback
+    text = TradeFlowTests.text
+
+    async def test_performance_report_has_bold_period_and_supplied_totals(self):
+        await self.callback("trade:results")
+        sent = self.bot.send_message.call_args.kwargs
+        self.assertIn("<b>\u200fبرآیند ۴۵ روز گذشته</b>", sent["text"])
+        for value in ["۷۳ معامله", "۵۶ تارگت", "۱۷ استاپ", "4,325.73", "-850", "3,475.73"]:
+            self.assertIn(value, sent["text"])
+
+    async def test_legacy_trade_contact_only_shows_trading_support(self):
+        await self.callback("trade")
+        await self.callback("contact")
+        sent = self.bot.send_message.call_args.kwargs
+        urls = {b.url for row in sent["reply_markup"].inline_keyboard for b in row if b.url}
+        self.assertEqual(urls, {"https://t.me/Ahurasupport_trading"})
+        self.assertIn("Ahurasupport_trading", sent["text"])
+        self.assertNotIn("091", sent["text"])
+
+    def test_all_trade_support_keyboards_have_only_one_support_destination(self):
+        from minerbot.keyboards import trade_keyboard, trade_section_keyboard, subscription_keyboard
+        for keyboard in [trade_keyboard(), trade_section_keyboard(), subscription_keyboard()]:
+            urls = [b.url for row in keyboard.inline_keyboard for b in row if b.url]
+            self.assertEqual(urls, ["https://t.me/Ahurasupport_trading"])
+            for row in keyboard.inline_keyboard:
+                for button in row:
+                    if button.url:
+                        self.assertEqual(button.text, "💬 پشتیبانی")
 
 
 if __name__ == "__main__":

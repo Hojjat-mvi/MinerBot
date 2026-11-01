@@ -14,7 +14,7 @@ from telegram.error import TelegramError
 from minerbot.contacts import ContactStore, normalize_phone
 from minerbot.config import Settings
 from minerbot.handlers import callback_handler, delete_phone, handle_contact, handle_messages
-from minerbot.keyboards import TRADE_LABEL, FREE_LABEL, MONTHLY_LABEL, TRAINING_LABEL
+from minerbot.keyboards import TRADE_LABEL, FREE_LABEL, MONTHLY_LABEL, TRAINING_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL
 
 
 class ContactStoreTests(unittest.TestCase):
@@ -34,6 +34,32 @@ class ContactStoreTests(unittest.TestCase):
             self.assertEqual(path.stat().st_mode & 0o777, 0o600)
             store.delete(42)
             self.assertFalse(ContactStore(path).has_contact(42))
+
+    def test_old_phone_database_migrates_and_uid_survives_reopen(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "contacts.sqlite3"
+            with sqlite3.connect(path) as connection:
+                connection.execute("CREATE TABLE contacts (telegram_user_id INTEGER PRIMARY KEY, phone_number TEXT NOT NULL, consent_at TEXT NOT NULL, updated_at TEXT NOT NULL)")
+                connection.execute("INSERT INTO contacts VALUES (42, '+15551234567', 'original-consent', 'original-time')")
+            store = ContactStore(path)
+            self.assertTrue(store.has_contact(42))
+            store.save_uid(42, "123456", status="submitted")
+            store.save_uid(42, "123456", status="below_threshold")
+            self.assertTrue(ContactStore(path).has_contact(42))
+            with sqlite3.connect(path) as connection:
+                row = connection.execute("SELECT phone_number, consent_at, xt_uid, xt_status, xt_checked_at FROM contacts WHERE telegram_user_id=42").fetchone()
+            self.assertEqual(row[:4], ('+15551234567', 'original-consent', '123456', 'below_threshold'))
+            self.assertTrue(row[4])
+            store.save(42, '+15557654321')
+            store.delete(42)
+            self.assertFalse(store.has_contact(42))
+
+    def test_uid_cannot_create_an_orphan_user(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = ContactStore(Path(directory) / "contacts.sqlite3")
+            with self.assertRaises(ValueError):
+                store.save_uid(42, "123456", status="submitted")
+            self.assertFalse(store.has_contact(42))
 
     def test_invalid_phone_is_not_saved(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -65,11 +91,11 @@ class PhoneFlowTests(unittest.IsolatedAsyncioTestCase):
             effective_message=SimpleNamespace(contact=SimpleNamespace(user_id=owner, phone_number=phone), delete=AsyncMock()))
 
     async def test_every_trade_button_is_gated(self):
-        for label in [TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL]:
+        for label in [TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL]:
             await self.text(label)
             markup = self.bot.send_message.call_args.kwargs["reply_markup"]
             self.assertTrue(markup.keyboard[0][0].request_contact)
-        for data in ["trade", "trade:free", "trade:check", "trade:training", "trade:monthly"]:
+        for data in ["trade", "trade:free", "trade:check", "trade:training", "trade:monthly", "trade:subscriptions", "trade:results"]:
             await callback_handler(SimpleNamespace(callback_query=SimpleNamespace(data=data, from_user=self.user, answer=AsyncMock())), self.context)
             self.assertTrue(self.bot.send_message.call_args.kwargs["reply_markup"].keyboard[0][0].request_contact)
         self.context.bot_data["xt_verifier"].verify.assert_not_awaited()
@@ -81,7 +107,7 @@ class PhoneFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.store.has_contact(42))
         update.effective_message.delete.assert_awaited_once()
         labels = {b.text for row in self.bot.send_message.call_args.kwargs["reply_markup"].keyboard for b in row}
-        self.assertIn(FREE_LABEL, labels)
+        self.assertIn(SUBSCRIPTIONS_LABEL, labels)
         self.assertNotIn("phone_requested_until", self.context.user_data)
         self.assertNotIn("+15551234567", str(self.bot.send_message.call_args_list))
 
@@ -121,7 +147,7 @@ class PhoneFlowTests(unittest.IsolatedAsyncioTestCase):
         await self.text(TRADE_LABEL)
         self.assertNotIn("phone_requested_until", self.context.user_data)
         labels = {b.text for row in self.bot.send_message.call_args.kwargs["reply_markup"].keyboard for b in row}
-        self.assertIn(FREE_LABEL, labels)
+        self.assertIn(SUBSCRIPTIONS_LABEL, labels)
 
     async def test_delete_phone_revokes_trade_entry(self):
         self.store.save(42, "+15551234567")

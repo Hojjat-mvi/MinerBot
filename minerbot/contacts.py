@@ -1,4 +1,4 @@
-"""Minimal contact storage: Telegram ID, phone, and consent timestamps only."""
+"""Contact storage with a self-reported XT UID and its latest eligibility result."""
 
 import re
 import sqlite3
@@ -24,12 +24,17 @@ class ContactStore:
         try:
             self.path.chmod(0o600)
             connection.execute("PRAGMA secure_delete=ON")
+            connection.execute("BEGIN IMMEDIATE")
             connection.execute("""CREATE TABLE IF NOT EXISTS contacts (
                 telegram_user_id INTEGER PRIMARY KEY,
                 phone_number TEXT NOT NULL,
                 consent_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )""")
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(contacts)")}
+            for name in ("xt_uid", "xt_status", "xt_checked_at"):
+                if name not in columns:
+                    connection.execute(f"ALTER TABLE contacts ADD COLUMN {name} TEXT")
             connection.commit()
             return connection
         except Exception:
@@ -46,7 +51,7 @@ class ContactStore:
             raise ValueError("Invalid contact phone format")
         now = datetime.now(timezone.utc).isoformat()
         with closing(self._connect()) as connection, connection:
-            connection.execute("""INSERT INTO contacts VALUES (?, ?, ?, ?)
+            connection.execute("""INSERT INTO contacts (telegram_user_id, phone_number, consent_at, updated_at) VALUES (?, ?, ?, ?)
                 ON CONFLICT(telegram_user_id) DO UPDATE SET
                     phone_number=excluded.phone_number, consent_at=excluded.consent_at,
                     updated_at=excluded.updated_at""", (user_id, phone, now, now))
@@ -54,3 +59,18 @@ class ContactStore:
     def delete(self, user_id: int) -> None:
         with closing(self._connect()) as connection, connection:
             connection.execute("DELETE FROM contacts WHERE telegram_user_id = ?", (user_id,))
+
+    def save_uid(self, user_id: int, uid: str, *, status: str) -> None:
+        if not re.fullmatch(r"[1-9][0-9]{0,18}", uid) or int(uid) > 9223372036854775807:
+            raise ValueError("Invalid XT UID")
+        if status not in {"submitted", "unavailable", "not_referred", "below_threshold", "eligible"}:
+            raise ValueError("Invalid XT check status")
+        now = datetime.now(timezone.utc).isoformat()
+        with closing(self._connect()) as connection, connection:
+            cursor = connection.execute(
+                """UPDATE contacts SET xt_uid=?, xt_status=?, xt_checked_at=?, updated_at=?
+                   WHERE telegram_user_id=?""",
+                (uid, status, None if status == "submitted" else now, now, user_id),
+            )
+            if cursor.rowcount != 1:
+                raise ValueError("Phone registration is required before saving an XT UID")
