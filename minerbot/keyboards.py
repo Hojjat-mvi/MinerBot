@@ -3,7 +3,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
 from .config import Settings
-from .content import PRODUCTS
+from .content import PRODUCTS, SUPPORT_CONTACTS, SALES_CONTACTS
 from .catalog import Product
 
 TRAINING_LABEL = "🎓 آموزش کار با صرافی XT"
@@ -48,9 +48,15 @@ def navigation_keyboard(product_id: str | None = None) -> InlineKeyboardMarkup:
 
 
 def contact_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 گفت‌وگو با پشتیبانی", url="https://t.me/Ahouraadmin01", style="success")],
-        [InlineKeyboardButton("💬 مشاور فروش", url="https://t.me/Abolfazl_lashkari", style="primary")],
+    rows = [
+        [InlineKeyboardButton(f"🛟 پشتیبانی {index} · @{username}", url=f"https://t.me/{username}", style="success")]
+        for index, (username, _) in enumerate(SUPPORT_CONTACTS, 1)
+    ]
+    rows.extend([
+        [InlineKeyboardButton(f"🛍 فروش {index} · @{username}", url=f"https://t.me/{username}", style="primary")]
+        for index, (username, _) in enumerate(SALES_CONTACTS, 1)
+    ])
+    return InlineKeyboardMarkup(rows + [
         [button("⚡ دستگاه‌های لایتنینگ", "lightning")],
         [button("🏠 منوی اصلی", "home")],
     ])
@@ -146,3 +152,14 @@ def phone_keyboard() -> ReplyKeyboardMarkup:
         [KeyboardButton("📱 اشتراک‌گذاری شمارهٔ من", request_contact=True, style="success")],
         [KeyboardButton("🏠 منوی اصلی")],
     ], resize_keyboard=True, one_time_keyboard=True, is_persistent=False)
+
+
+def subscription_keyboard() -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(f"💬 دریافت اشتراک · @{username}", url=f"https://t.me/{username}", style="success")]
+        for username, _ in SUPPORT_CONTACTS
+    ]
+    return InlineKeyboardMarkup(rows + [
+        [button("↩️ بازگشت به اتاق ترید", "trade")],
+        [button("🏠 منوی اصلی", "home")],
+    ])

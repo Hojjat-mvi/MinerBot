@@ -344,5 +344,33 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("هنوز فعال نشده", self.bot.send_message.call_args.kwargs["text"])
 
 
+
+class SubscriptionContactTests(unittest.IsolatedAsyncioTestCase):
+    setUp = TradeFlowTests.setUp
+    text = TradeFlowTests.text
+
+    async def test_monthly_subscription_prices_and_support_buttons(self):
+        from minerbot.content import SUPPORT_CONTACTS, SALES_CONTACTS
+        from minerbot.keyboards import MONTHLY_LABEL
+        await self.text(MONTHLY_LABEL)
+        sent = self.bot.send_message.call_args.kwargs
+        for amount in ["۱۰۰", "۲۵۰", "۴۰۰", "۷۰۰"]:
+            self.assertIn(amount + " دلار", sent["text"])
+        urls = {button.url for row in sent["reply_markup"].inline_keyboard for button in row if button.url}
+        self.assertEqual(urls, {"https://t.me/" + username for username, _ in SUPPORT_CONTACTS})
+        for username, _ in SALES_CONTACTS:
+            self.assertNotIn("https://t.me/" + username, urls)
+
+    async def test_contact_details_match_buttons(self):
+        from minerbot.content import SUPPORT_CONTACTS, SALES_CONTACTS
+        await self.text("ارتباط با ما 📧")
+        sent = self.bot.send_message.call_args.kwargs
+        urls = {button.url for row in sent["reply_markup"].inline_keyboard for button in row if button.url}
+        for username, phone in SUPPORT_CONTACTS + SALES_CONTACTS:
+            self.assertIn(username, sent["text"])
+            self.assertIn(phone, sent["text"])
+            self.assertIn("https://t.me/" + username, urls)
+
+
 if __name__ == "__main__":
     unittest.main()

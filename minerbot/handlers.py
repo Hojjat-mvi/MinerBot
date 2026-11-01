@@ -10,12 +10,12 @@ from telegram.ext import ContextTypes
 
 from .config import ASSET_DIR, Settings
 from .catalog import Product, catalog_summary, financial_details, product_card
-from .content import CALLBACK_TEXTS, MENU_TEXTS, PRODUCTS, SETUP_VIDEOS
+from .content import CALLBACK_TEXTS, MENU_TEXTS, PRODUCTS, SETUP_VIDEOS, VIP_SUBSCRIPTION_TEXT
 from .keyboards import (
     PRODUCT_IDS, channel_keyboard, contact_keyboard, main_keyboard,
     navigation_keyboard, product_keyboard, persistent_menu_keyboard,
     lightning_menu_keyboard, trade_keyboard, trade_menu_keyboard, reward_keyboard, LIGHTNING_LABEL, TRADE_LABEL,
-    FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, trade_section_keyboard, phone_keyboard,
+    FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, trade_section_keyboard, phone_keyboard, subscription_keyboard,
 )
 from .presentation import rtl_html
 from .xt import XTUnavailable, normalize_uid
@@ -321,9 +321,9 @@ async def show_trade_section(context: ContextTypes.DEFAULT_TYPE, user_id: int, *
     text = (
         "🎓 آموزش کار با صرافی XT\n\nمحتوای آموزشی به‌زودی در این بخش قرار می‌گیرد. برای راهنمایی فعلاً با پشتیبانی تماس بگیرید."
         if training else
-        "💳 اشتراک ماهانه\n\nجزئیات و روش تهیهٔ اشتراک ماهانه هنوز اعلام نشده است. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید."
+        VIP_SUBSCRIPTION_TEXT
     )
-    await send_text(context, user_id, text, trade_section_keyboard())
+    await send_text(context, user_id, text, trade_section_keyboard() if training else subscription_keyboard())
 
 
 async def require_trade_phone(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
