@@ -63,3 +63,26 @@ class AdminTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(connection.execute('SELECT capital FROM performance_config').fetchone()[0], '1000')
             rows = connection.execute('SELECT pnl,voided FROM performance_trades').fetchall()
             self.assertEqual([(r['pnl'], r['voided']) for r in rows], [('10', 1)])
+
+    async def test_telegram_send_happens_after_transaction_released(self):
+        update = SimpleNamespace(effective_user=SimpleNamespace(id=99), effective_message=SimpleNamespace(
+            text='/perfsetup 1000 USDT 2020-01-01T00:00:00Z'))
+        async def check_unlocked(*args, **kwargs):
+            with closing(connect(self.context)) as connection, connection:
+                connection.execute('BEGIN IMMEDIATE')
+                self.assertEqual(connection.execute('SELECT capital FROM performance_config').fetchone()[0], '1000')
+        with patch('minerbot.performance.send_text', side_effect=check_unlocked):
+            await performance_admin(update, self.context)
+
+    async def test_filtered_return_uses_equity_from_prior_trades(self):
+        from datetime import datetime, timedelta, timezone
+        from minerbot.performance import show_dashboard
+        now = datetime.now(timezone.utc)
+        await self.command(f'/perfsetup 1000 USDT {(now-timedelta(days=60)).isoformat()}')
+        await self.command(f'/addtrade prior {(now-timedelta(days=40)).isoformat()} 100 BTC/USDT')
+        await self.command(f'/addtrade recent {(now-timedelta(days=1)).isoformat()} 110 BTC/USDT')
+        with patch('minerbot.performance.send_text', new_callable=AsyncMock) as send:
+            await show_dashboard(self.context, 42, '7')
+        text = send.call_args.args[2]
+        self.assertIn('معاملات بسته‌شده: 1', text)
+        self.assertIn('بازده سرمایه: 10.00%', text)

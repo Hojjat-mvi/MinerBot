@@ -18,7 +18,7 @@ from .keyboards import (
     FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, trade_section_keyboard, phone_keyboard, subscription_keyboard,
     SUBSCRIPTIONS_LABEL, RESULTS_LABEL, subscription_menu_keyboard,
 )
-from .presentation import rtl_html
+from .presentation import rtl_html, telegram_text_parts
 from .xt import XTUnavailable, normalize_uid
 from .contacts import normalize_phone
 from .rewards import issue_reward, RewardConflict
@@ -34,9 +34,12 @@ def settings_for(context: ContextTypes.DEFAULT_TYPE) -> Settings:
 
 
 async def send_text(context: ContextTypes.DEFAULT_TYPE, user_id: int, text: str, keyboard, *, bold_lines: tuple[str, ...] = ()) -> None:
-    await context.bot.send_message(
-        chat_id=user_id, text=rtl_html(text, bold_lines=bold_lines), parse_mode=ParseMode.HTML, reply_markup=keyboard,
-    )
+    parts = telegram_text_parts(text, bold_lines=bold_lines)
+    for index, part in enumerate(parts):
+        await context.bot.send_message(
+            chat_id=user_id, text=part, parse_mode=ParseMode.HTML,
+            reply_markup=keyboard if index == len(parts) - 1 else None,
+        )
 
 
 async def require_membership(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
@@ -438,6 +441,7 @@ async def delete_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if update.effective_user is None:
         return
     user_id = update.effective_user.id
+    context.user_data.pop("ticket_until", None)
     context.bot_data["contacts"].delete(user_id)
     context.user_data.pop("phone_requested_until", None)
     context.user_data.pop("trade_awaiting_uid", None)

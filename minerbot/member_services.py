@@ -6,7 +6,7 @@ from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from .handlers import send_text
-from .keyboards import main_keyboard, trade_section_keyboard
+from .keyboards import main_keyboard
 
 ACCOUNT_LABEL = "👤 حساب من"
 TICKETS_LABEL = "🎫 تیکت‌های پشتیبانی"
@@ -107,7 +107,7 @@ async def ticket_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if action == ['ticket', 'new']:
         await new_ticket(update, context)
         return
-    if len(action) != 3 or not action[2].isdigit():
+    if len(action) != 3 or not action[2].isascii() or not action[2].isdigit():
         return
     if action[1] == 'list':
         await show_tickets(context, query.from_user.id)
@@ -128,8 +128,6 @@ async def ticket_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await send_text(context, uid, f"💬 پاسخ پشتیبانی\n\n{ticket['reply'] or 'هنوز پاسخی ثبت نشده است.'}",
                         InlineKeyboardMarkup([[InlineKeyboardButton("🔒 بستن تیکت", callback_data=f"ticket:close:{ticket_id}")],
                                               [InlineKeyboardButton("🎫 تیکت‌ها", callback_data='ticket:list:0')]]))
-    elif action[1] == 'list':
-        await show_tickets(context, uid)
 
 
 def admin(update, context):

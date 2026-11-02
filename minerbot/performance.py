@@ -3,6 +3,7 @@
 Amounts are net realized P&L, including fees, in a single configured currency.
 No deposits, withdrawals, open positions or personal XT accounts are inferred.
 """
+import asyncio
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -17,20 +18,14 @@ from .handlers import send_text
 
 
 def connect(context):
-    connection = context.bot_data['contacts']._connect()
-    connection.row_factory = sqlite3.Row
-    with connection:
-        connection.execute('''CREATE TABLE IF NOT EXISTS performance_config (
-            id INTEGER PRIMARY KEY CHECK(id=1), capital TEXT NOT NULL,
-            currency TEXT NOT NULL, starts_at TEXT NOT NULL)''')
-        connection.execute('''CREATE TABLE IF NOT EXISTS performance_trades (
-            reference TEXT PRIMARY KEY, closed_at TEXT NOT NULL, pnl TEXT NOT NULL,
-            symbol TEXT NOT NULL, created_by INTEGER NOT NULL, voided INTEGER NOT NULL DEFAULT 0)''')
-    return connection
+    """Open the shared ledger through its storage owner."""
+    return context.bot_data['contacts'].performance_connection()
 
 
 def number(raw):
     try:
+        if len(raw) > 64:
+            raise ValueError
         value = Decimal(raw)
         if not value.is_finite() or abs(value) > Decimal('1000000000000') or value.as_tuple().exponent < -8:
             raise ValueError
@@ -45,7 +40,7 @@ def timestamp(raw):
         if result.tzinfo is None:
             raise ValueError
         return result.astimezone(timezone.utc)
-    except ValueError:
+    except (ValueError, OverflowError):
         raise ValueError('تاریخ باید ISO 8601 همراه منطقهٔ زمانی باشد؛ مثال: 2026-11-02T12:00:00Z') from None
 
 
@@ -156,7 +151,7 @@ async def show_dashboard(context, user_id, period='all', chart=False):
             'افت سرمایه بر اساس معاملات بسته‌شده است، نه نوسان پوزیشن‌های باز. این گزارش حساب شخصی شما نیست.')
     await send_text(context, user_id, text, keyboard(period))
     if chart and selected:
-        image = BytesIO(chart_png(result['points']))
+        image = BytesIO(await asyncio.to_thread(chart_png, result['points']))
         image.name = 'performance.png'
         await context.bot.send_photo(chat_id=user_id, photo=image,
                                      caption=f"نمودار سود و زیان تجمعی ({config['currency']})؛ محور افقی: ترتیب معاملات، از چپ به راست. "
@@ -183,6 +178,13 @@ async def performance_admin(update, context):
     if update.effective_user.id not in context.bot_data['settings'].trade_admin_ids:
         return
     args = (update.effective_message.text or '').split()
+    response = manage_ledger(context, args, update.effective_user.id)
+    # Telegram requests must happen after releasing the SQLite write lock.
+    await send_text(context, update.effective_user.id, response, None)
+
+
+def manage_ledger(context, args, admin_id):
+    """Apply an authorized admin operation within one local transaction."""
     help_text = ('📊 مدیریت عملکرد\n\n'
                  '/perfsetup CAPITAL CURRENCY START_ISO\n'
                  '/addtrade REF CLOSED_ISO NET_PNL SYMBOL\n'
@@ -191,7 +193,7 @@ async def performance_admin(update, context):
                  'سرمایه باید موجودی قبل از اولین معامله باشد. مرجع معامله یکتا است؛ برای اصلاح ابتدا ابطال کنید و با مرجع جدید ثبت کنید. '
                  'تنظیمات پس از ثبت اولین معامله قفل می‌شود. سود و زیان خالص پس از کارمزد وارد شود.')
     try:
-        command = args[0].split('@')[0]
+        command = args[0].split('@')[0] if args else ''
         with closing(connect(context)) as connection, connection:
             connection.execute('BEGIN IMMEDIATE')
             if command == '/perfsetup' and len(args) == 4:
@@ -211,22 +213,18 @@ async def performance_admin(update, context):
                 if not timestamp(config['starts_at']) <= closed <= datetime.now(timezone.utc):
                     raise ValueError('تاریخ معامله باید بین آغاز دفتر و اکنون باشد.')
                 connection.execute('INSERT INTO performance_trades(reference,closed_at,pnl,symbol,created_by) VALUES(?,?,?,?,?)',
-                                   (args[1], closed.isoformat(), str(pnl), args[4], update.effective_user.id))
+                                   (args[1], closed.isoformat(), str(pnl), args[4], admin_id))
             elif command == '/voidtrade' and len(args) == 2:
                 if connection.execute('UPDATE performance_trades SET voided=1 WHERE reference=? AND voided=0', (args[1],)).rowcount != 1:
                     raise ValueError('معاملهٔ فعال پیدا نشد.')
             elif command == '/perftrades' and len(args) == 1:
                 rows = connection.execute('SELECT * FROM performance_trades ORDER BY closed_at DESC,reference DESC LIMIT 15').fetchall()
-                await send_text(context, update.effective_user.id, '📋 آخرین ۱۵ معامله\n\n'+('\n'.join(
-                    f"{t['reference']} | {t['closed_at']} | {t['symbol']} | {t['pnl']} | {'باطل' if t['voided'] else 'فعال'}" for t in rows) or 'بدون معامله'), None)
-                return
+                return '📋 آخرین ۱۵ معامله\n\n'+('\n'.join(
+                    f"{t['reference']} | {t['closed_at']} | {t['symbol']} | {t['pnl']} | {'باطل' if t['voided'] else 'فعال'}" for t in rows) or 'بدون معامله')
             else:
-                await send_text(context, update.effective_user.id, help_text, None)
-                return
+                return help_text
     except sqlite3.IntegrityError:
-        await send_text(context, update.effective_user.id, 'مرجع معامله تکراری است؛ ثبت دوباره انجام نشد.', None)
-        return
+        return 'مرجع معامله تکراری است؛ ثبت دوباره انجام نشد.'
     except ValueError as error:
-        await send_text(context, update.effective_user.id, str(error), None)
-        return
-    await send_text(context, update.effective_user.id, '✅ تغییرات دفتر عملکرد ذخیره شد.', None)
+        return str(error)
+    return '✅ تغییرات دفتر عملکرد ذخیره شد.'

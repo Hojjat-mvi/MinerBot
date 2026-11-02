@@ -1,5 +1,7 @@
 """Catalog snapshot from the supplied Ahura product page (2026-10-27)."""
 
+from decimal import Decimal
+
 PRODUCTS = {
     'مدل چهار کانال 🚀': {
         'description': """مدل چهار کانال 🚀
@@ -176,8 +178,6 @@ VIP_SUBSCRIPTION_TEXT = """💳 اشتراک کانال VIP
 """
 
 # Single source for report amounts and derived dashboard metrics.
-from decimal import Decimal
-
 PERFORMANCE_PROFIT = Decimal("4325.73")
 PERFORMANCE_LOSS = Decimal("850")
 
