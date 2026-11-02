@@ -173,11 +173,15 @@ VIP_SUBSCRIPTION_TEXT = """💳 اشتراک کانال VIP
 • سه‌ماهه: ۲۵۰ دلار
 • شش‌ماهه: ۴۰۰ دلار
 • یک‌ساله: ۷۰۰ دلار
+"""
 
-💬 برای دریافت اشتراک، به پشتیبانی پیام دهید:
-@Ahurasupport_trading"""
+# Single source for report amounts and derived dashboard metrics.
+from decimal import Decimal
 
-TRADE_PERFORMANCE_TEXT = """گزارش عملکرد معاملات | Trading Performance
+PERFORMANCE_PROFIT = Decimal("4325.73")
+PERFORMANCE_LOSS = Decimal("850")
+
+TRADE_PERFORMANCE_TEXT = f"""گزارش عملکرد معاملات | Trading Performance
 برآیند ۴۵ روز گذشته
 
 📈 رشد مدیریت سرمایه و رشد حساب
@@ -193,8 +197,8 @@ TRADE_PERFORMANCE_TEXT = """گزارش عملکرد معاملات | Trading Per
 🟢 ۷۶.۷۱٪ وین‌ریت (Win Rate)
 🔴 ۲۳.۲۹٪ لوس‌ریت (Loss Rate)
 
-💰 مجموع سود: +4,325.73
+💰 مجموع سود: +{PERFORMANCE_PROFIT:,.2f}
 
-📉 مجموع ضرر: -850
+📉 مجموع ضرر: -{PERFORMANCE_LOSS:,.0f}
 
-🚀 برآیند خالص: +3,475.73"""
+🚀 برآیند خالص: +{PERFORMANCE_PROFIT - PERFORMANCE_LOSS:,.2f}"""

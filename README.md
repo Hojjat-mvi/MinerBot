@@ -332,3 +332,28 @@ Text-only broadcasts are implemented; photos/videos are not yet supported.
 Broadcast bodies are cleared after completion/interruption/cancellation. Recipient
 IDs/statuses remain for operational reporting and must be covered by backup and
 retention policies. This code has not been live-tested or deployed yet.
+
+### Member services
+
+- `/account`: private Telegram ID, masked registered phone, saved XT UID and cached eligibility result/time. This does not assert current VIP membership or payment status.
+- `/tickets`: create, view and close your own tickets. Tickets and replies use the existing persistent SQLite volume. Up to three open tickets per user; new requests are limited to one per minute. Text only, up to 2,000 UTF-16 units. After a response, open a new ticket referencing the previous number if further help is needed.
+- Admins listed in `TRADE_ADMIN_IDS` use `/ticketqueue` to see the oldest ten open requests, then `/replyticket ID response`. The reply is saved before notification; users can retrieve it even if Telegram delivery fails. No separate automatic admin alerts are sent. Ticket text remains stored after `/deletephone`; that command deletes the phone profile only. Avoid requesting credentials in tickets.
+- `/performance` and the existing trade performance button open the shared ledger dashboard. This is the group's performance, never a user's XT balance. The earlier static report is accessible separately and is not imported as fabricated trades.
+
+### Performance ledger
+
+Admins in `TRADE_ADMIN_IDS` configure the ledger in a private chat. Commands without the required arguments show help. Replace the example values with your actual capital, dates and results:
+
+```text
+/perfsetup 10000 USDT 2026-10-01T00:00:00Z
+/addtrade trade-001 2026-10-02T12:30:00Z 125.50 BTC/USDT
+/addtrade trade-002 2026-10-03T15:00:00Z -40 ETH/USDT
+/perftrades
+/voidtrade trade-002
+```
+
+Dates require a timezone and must not be in the future. Starting capital means equity immediately before the ledger's first trade. Configuration locks once any trade exists, including voided trades. Trade references are unique, including after voiding, preventing duplicate entry; to correct an entry, void it and record a new reference. Void records are retained. Enter realized net P&L after fees, all in the configured currency. Trades are ordered by closing time, then reference for equal timestamps.
+
+The dashboard offers rolling 7-, 30-, 90-day and all-time filters, wins/losses/breakeven, win rate, gross profit/loss, net P&L, profit factor, return on opening equity and maximum drawdown within the selected period. Opening equity includes prior recorded trades. Win rate includes breakeven trades in its denominator. ROI/drawdown are unavailable for nonpositive opening or closing equity; profit factor is unavailable without losing trades. Drawdown uses closed-trade equity starting at the beginning of the selected window; it does not measure open-position fluctuations. Charts show cumulative realized P&L by trade sequence with values in their caption.
+
+This ledger assumes no deposits or withdrawals; capital flows need a separate cash-flow model before meaningful returns can be calculated for such accounts. Values update on admin entry, not automatically from XT. An automatic import would require an actual trade-history source; referral/deposit verification alone is insufficient. SQLite tables live in the existing persistent Docker volume and must be included in database backups. No new service, port or dependency is required.

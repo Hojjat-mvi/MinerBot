@@ -67,6 +67,12 @@ class ContactStore:
                 state TEXT NOT NULL DEFAULT 'pending',
                 PRIMARY KEY (broadcast_id, telegram_user_id)
             )""")
+            connection.execute("""CREATE TABLE IF NOT EXISTS support_tickets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+                body TEXT NOT NULL, reply TEXT, status TEXT NOT NULL DEFAULT 'open',
+                created_at REAL NOT NULL, updated_at REAL NOT NULL
+            )""")
+            connection.execute("CREATE INDEX IF NOT EXISTS tickets_owner ON support_tickets(user_id, created_at)")
             connection.commit()
             return connection
         except Exception:
@@ -248,3 +254,51 @@ class ContactStore:
     def delivery_counts(self, draft_id: str) -> dict[str, int]:
         with closing(self._connect()) as connection:
             return dict(connection.execute("SELECT state, COUNT(*) FROM broadcast_deliveries WHERE broadcast_id=? GROUP BY state", (draft_id,)).fetchall())
+
+    def account(self, user_id: int) -> dict | None:
+        with closing(self._connect()) as connection:
+            connection.row_factory = sqlite3.Row
+            row = connection.execute("SELECT * FROM contacts WHERE telegram_user_id=?", (user_id,)).fetchone()
+            return dict(row) if row else None
+
+    def create_ticket(self, user_id: int, body: str, now: float) -> int:
+        if not body.strip() or len(body.encode("utf-16-le")) > 4000:
+            raise ValueError("invalid_body")
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            count, latest = connection.execute(
+                "SELECT SUM(CASE WHEN status='open' THEN 1 ELSE 0 END), MAX(created_at) FROM support_tickets WHERE user_id=?",
+                (user_id,),
+            ).fetchone()
+            if (count or 0) >= 3 or (latest is not None and now - latest < 60):
+                raise ValueError("ticket_limit")
+            return connection.execute(
+                "INSERT INTO support_tickets(user_id,body,created_at,updated_at) VALUES(?,?,?,?)",
+                (user_id, body.strip(), now, now),
+            ).lastrowid
+
+    def tickets(self, user_id: int | None) -> list[dict]:
+        with closing(self._connect()) as connection:
+            connection.row_factory = sqlite3.Row
+            if user_id is None:
+                rows = connection.execute("SELECT * FROM support_tickets WHERE status='open' ORDER BY id LIMIT 10")
+            else:
+                rows = connection.execute("SELECT * FROM support_tickets WHERE user_id=? ORDER BY id DESC LIMIT 10", (user_id,))
+            return [dict(row) for row in rows]
+
+    def ticket(self, ticket_id: int, user_id: int | None) -> dict | None:
+        with closing(self._connect()) as connection:
+            connection.row_factory = sqlite3.Row
+            row = connection.execute("SELECT * FROM support_tickets WHERE id=? AND (? IS NULL OR user_id=?)",
+                                     (ticket_id, user_id, user_id)).fetchone()
+            return dict(row) if row else None
+
+    def reply_ticket(self, ticket_id: int, reply: str, now: float) -> bool:
+        with closing(self._connect()) as connection, connection:
+            return connection.execute("UPDATE support_tickets SET reply=?,status='answered',updated_at=? WHERE id=? AND status='open'",
+                                      (reply, now, ticket_id)).rowcount == 1
+
+    def close_ticket(self, ticket_id: int, user_id: int) -> bool:
+        with closing(self._connect()) as connection, connection:
+            return connection.execute("UPDATE support_tickets SET status='closed' WHERE id=? AND user_id=? AND status!='closed'",
+                                      (ticket_id, user_id)).rowcount == 1

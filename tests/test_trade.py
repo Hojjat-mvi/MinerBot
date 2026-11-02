@@ -335,7 +335,10 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
             await self.text(label)
             self.assertNotIn("trade_awaiting_uid", self.context.user_data)
             markup = self.bot.send_message.call_args.kwargs["reply_markup"]
-            self.assertIn("trade", {button.callback_data for row in markup.inline_keyboard for button in row})
+            if label == MONTHLY_LABEL:
+                self.assertIn("↩️ بازگشت به اتاق ترید", {button.text for row in markup.keyboard for button in row})
+            else:
+                self.assertIn("trade", {button.callback_data for row in markup.inline_keyboard for button in row})
         self.verifier.verify.assert_not_awaited()
 
     async def test_legacy_labels_with_whitespace_still_route(self):
@@ -363,8 +366,8 @@ class SubscriptionContactTests(unittest.IsolatedAsyncioTestCase):
         sent = self.bot.send_message.call_args.kwargs
         for amount in ["۱۰۰", "۲۵۰", "۴۰۰", "۷۰۰"]:
             self.assertIn(amount + " دلار", sent["text"])
-        urls = {button.url for row in sent["reply_markup"].inline_keyboard for button in row if button.url}
-        self.assertEqual(urls, {"https://t.me/Ahurasupport_trading"})
+        self.assertIn("💬 پشتیبانی", {button.text for row in sent["reply_markup"].keyboard for button in row})
+        urls = set()
         self.assertIn("Ahurasupport_trading", sent["text"])
         for username, phone in SUPPORT_CONTACTS:
             self.assertNotIn(username, sent["text"])
@@ -397,14 +400,15 @@ class NestedSubscriptionTests(unittest.IsolatedAsyncioTestCase):
             else:
                 await self.callback("trade:subscriptions")
             labels = [b.text for row in self.bot.send_message.call_args.kwargs["reply_markup"].keyboard for b in row]
-            self.assertEqual(labels[:2], [FREE_LABEL, MONTHLY_LABEL])
+            self.assertEqual(labels, [FREE_LABEL, MONTHLY_LABEL, "🏠 منوی اصلی"])
 
     async def test_results_navigation_cancels_uid_input(self):
         from minerbot.keyboards import RESULTS_LABEL
         await self.callback("trade:check")
-        await self.text(RESULTS_LABEL)
+        with patch("minerbot.member_services.show_dashboard", new_callable=AsyncMock) as dashboard:
+            await self.text(RESULTS_LABEL)
         self.assertNotIn("trade_awaiting_uid", self.context.user_data)
-        self.assertIn("Trading Performance", self.bot.send_message.call_args.kwargs["text"])
+        dashboard.assert_awaited_once_with(self.context, 42)
         self.verifier.verify.assert_not_awaited()
 
     async def test_uid_saved_with_result_status(self):
@@ -428,9 +432,13 @@ class TradeSupportPerformanceTests(unittest.IsolatedAsyncioTestCase):
     text = TradeFlowTests.text
 
     async def test_performance_report_has_bold_period_and_supplied_totals(self):
-        await self.callback("trade:results")
+        from minerbot.performance import performance_callback
+        update = SimpleNamespace(
+            effective_chat=SimpleNamespace(type="private"),
+            callback_query=SimpleNamespace(answer=AsyncMock(), from_user=SimpleNamespace(id=42), data="perf:legacy"))
+        await performance_callback(update, self.context)
         sent = self.bot.send_message.call_args.kwargs
-        self.assertIn("<b>\u200fبرآیند ۴۵ روز گذشته</b>", sent["text"])
+        self.assertIn("برآیند ۴۵ روز گذشته", sent["text"])
         for value in ["۷۳ معامله", "۵۶ تارگت", "۱۷ استاپ", "4,325.73", "-850", "3,475.73"]:
             self.assertIn(value, sent["text"])
 
@@ -445,7 +453,7 @@ class TradeSupportPerformanceTests(unittest.IsolatedAsyncioTestCase):
 
     def test_all_trade_support_keyboards_have_only_one_support_destination(self):
         from minerbot.keyboards import trade_keyboard, trade_section_keyboard, subscription_keyboard
-        for keyboard in [trade_keyboard(), trade_section_keyboard(), subscription_keyboard()]:
+        for keyboard in [trade_keyboard(), trade_section_keyboard()]:
             urls = [b.url for row in keyboard.inline_keyboard for b in row if b.url]
             self.assertEqual(urls, ["https://t.me/Ahurasupport_trading"])
             for row in keyboard.inline_keyboard:

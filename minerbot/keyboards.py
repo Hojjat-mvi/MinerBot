@@ -99,6 +99,7 @@ def trade_menu_keyboard() -> ReplyKeyboardMarkup:
         [KeyboardButton(SUBSCRIPTIONS_LABEL, style="success")],
         [KeyboardButton(RESULTS_LABEL, style="primary")],
         [KeyboardButton(TRAINING_LABEL)],
+        [KeyboardButton("👤 حساب من"), KeyboardButton("🎫 تیکت‌های پشتیبانی")],
         [KeyboardButton("🏠 منوی اصلی")],
     ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False,
        input_field_placeholder="یک گزینه را انتخاب کنید…")
@@ -110,6 +111,7 @@ def main_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [button(LIGHTNING_LABEL, "lightning", "primary")],
         [button(TRADE_LABEL, "trade", "success")],
+        [button("👤 حساب من", "member:account"), button("🎫 تیکت‌های پشتیبانی", "member:tickets")],
     ])
 
 
@@ -157,19 +159,18 @@ def phone_keyboard() -> ReplyKeyboardMarkup:
     ], resize_keyboard=True, one_time_keyboard=True, is_persistent=False)
 
 
-def subscription_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 پشتیبانی", url=f"https://t.me/{TRADE_SUPPORT_USERNAME}", style="success")],
-        [button("↩️ دریافت اشتراک", "trade:subscriptions")],
-        [button("↩️ بازگشت به اتاق ترید", "trade")],
-        [button("🏠 منوی اصلی", "home")],
-    ])
+def subscription_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([
+        [KeyboardButton("💬 پشتیبانی", style="success")],
+        [KeyboardButton("↩️ دریافت اشتراک")],
+        [KeyboardButton("↩️ بازگشت به اتاق ترید")],
+        [KeyboardButton("🏠 منوی اصلی")],
+    ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False)
 
 
 def subscription_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup([
         [KeyboardButton(FREE_LABEL, style="success")],
         [KeyboardButton(MONTHLY_LABEL, style="primary")],
-        [KeyboardButton(TRADE_LABEL)],
         [KeyboardButton("🏠 منوی اصلی")],
     ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False)

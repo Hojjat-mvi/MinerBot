@@ -53,6 +53,7 @@ async def require_membership(context: ContextTypes.DEFAULT_TYPE, user_id: int) -
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    context.user_data.pop("ticket_until", None)
     if update.effective_user is None:
         return
     user_id = update.effective_user.id
@@ -91,6 +92,11 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     user_id = query.from_user.id
     data = query.data
     if not isinstance(data, str):
+        return
+    context.user_data.pop("ticket_until", None)
+    if data in {"member:account", "member:tickets"}:
+        from .member_services import account_command, tickets_command
+        await (account_command if data == "member:account" else tickets_command)(update, context)
         return
     if not await require_membership(context, user_id):
         return
@@ -192,6 +198,18 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
     user_id = update.effective_user.id
     text = (update.effective_message.text or "").strip()
+    text = {"↩️ دریافت اشتراک": SUBSCRIPTIONS_LABEL,
+            "↩️ بازگشت به اتاق ترید": TRADE_LABEL}.get(text, text)
+    from .member_services import account_command, tickets_command, ticket_input
+    if text in {"👤 حساب من", "🎫 تیکت‌های پشتیبانی"}:
+        await (account_command if text == "👤 حساب من" else tickets_command)(update, context)
+        return
+    navigation = {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL,
+                  SUBSCRIPTIONS_LABEL, RESULTS_LABEL, "🏠 منوی اصلی", "💵 قیمت و درآمد دستگاه‌ها", "💬 پشتیبانی"}
+    if text in navigation or text in PRODUCTS or text in MENU_TEXTS:
+        context.user_data.pop("ticket_until", None)
+    elif await ticket_input(update, context):
+        return
     # Accept buttons already sent during the user's earlier menu edits.
     text = {
         "🆓 اشتراک رایگان": FREE_LABEL,
@@ -213,7 +231,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
     # Keep existing reply-keyboard messages working during the UI transition.
     product = PRODUCTS.get(text)
-    if text in {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL, "🏠 منوی اصلی"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
+    if text in {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL, "🏠 منوی اصلی", "💬 پشتیبانی"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
         context.user_data.pop("trade_awaiting_uid", None)
         context.user_data.pop("phone_requested_until", None)
     elif context.user_data.get("phone_requested_until"):
@@ -227,6 +245,9 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await send_text(context, user_id, LIGHTNING_TEXT, lightning_menu_keyboard())
     elif text == TRADE_LABEL:
         await show_trade_room(context, user_id)
+    elif text == "💬 پشتیبانی":
+        if await require_trade_phone(context, user_id):
+            await send_text(context, user_id, TRADE_SUPPORT_TEXT, subscription_keyboard())
     elif text == SUBSCRIPTIONS_LABEL:
         await show_subscriptions(context, user_id)
     elif text == RESULTS_LABEL:
@@ -264,6 +285,7 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    context.user_data.pop("ticket_until", None)
     if update.effective_user and await require_membership(context, update.effective_user.id):
         context.user_data.pop("trade_awaiting_uid", None)
         context.user_data.pop("phone_requested_until", None)
@@ -433,6 +455,5 @@ async def show_subscriptions(context: ContextTypes.DEFAULT_TYPE, user_id: int) -
 async def show_trade_results(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
     if not await require_trade_phone(context, user_id):
         return
-    await send_text(context, user_id,
-                    TRADE_PERFORMANCE_TEXT,
-                    trade_section_keyboard(), bold_lines=("برآیند ۴۵ روز گذشته",))
+    from .member_services import show_dashboard
+    await show_dashboard(context, user_id)
