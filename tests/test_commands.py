@@ -15,7 +15,7 @@ class CommandMenuTests(unittest.IsolatedAsyncioTestCase):
     async def test_native_menu_registers_only_public_user_commands(self):
         bot = SimpleNamespace(set_my_commands=AsyncMock(), set_chat_menu_button=AsyncMock())
         await configure_command_menu(SimpleNamespace(bot=bot))
-        self.assertEqual([c.command for c in USER_COMMANDS], ["menu", "trade", "nodes", "support", "account", "tickets", "performance", "help", "stop", "subscribe", "deletephone"])
+        self.assertEqual([c.command for c in USER_COMMANDS], ["menu", "trade", "nodes", "support", "account", "performance", "help", "stop", "subscribe", "deletephone"])
         self.assertEqual(bot.set_my_commands.await_count, 2)
         self.assertEqual(bot.set_chat_menu_button.call_args.kwargs["menu_button"].type, "commands")
         self.assertNotIn("channelid", [c.command for c in USER_COMMANDS])

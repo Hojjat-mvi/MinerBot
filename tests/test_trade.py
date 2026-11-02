@@ -296,7 +296,7 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
                 await self.callback("trade")
             sent = self.bot.send_message.call_args.kwargs
             labels = [button.text for row in sent["reply_markup"].keyboard for button in row]
-            self.assertEqual(labels, [SUBSCRIPTIONS_LABEL, RESULTS_LABEL, TRAINING_LABEL, "👤 حساب من", "🎫 تیکت‌های پشتیبانی", "🏠 منوی اصلی"])
+            self.assertEqual(labels, [SUBSCRIPTIONS_LABEL, RESULTS_LABEL, TRAINING_LABEL, "👤 حساب من", "🏠 منوی اصلی"])
             self.assertNotIn("vpn", sent["text"])
             self.assertEqual(sent["parse_mode"], "HTML")
             self.verifier.verify.assert_not_awaited()

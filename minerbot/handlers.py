@@ -56,7 +56,6 @@ async def require_membership(context: ContextTypes.DEFAULT_TYPE, user_id: int) -
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data.pop("ticket_until", None)
     if update.effective_user is None:
         return
     user_id = update.effective_user.id
@@ -96,10 +95,9 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     data = query.data
     if not isinstance(data, str):
         return
-    context.user_data.pop("ticket_until", None)
-    if data in {"member:account", "member:tickets"}:
-        from .member_services import account_command, tickets_command
-        await (account_command if data == "member:account" else tickets_command)(update, context)
+    if data == "member:account":
+        from .member_services import account_command
+        await account_command(update, context)
         return
     if not await require_membership(context, user_id):
         return
@@ -203,15 +201,9 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     text = (update.effective_message.text or "").strip()
     text = {"↩️ دریافت اشتراک": SUBSCRIPTIONS_LABEL,
             "↩️ بازگشت به اتاق ترید": TRADE_LABEL}.get(text, text)
-    from .member_services import account_command, tickets_command, ticket_input
-    if text in {"👤 حساب من", "🎫 تیکت‌های پشتیبانی"}:
-        await (account_command if text == "👤 حساب من" else tickets_command)(update, context)
-        return
-    navigation = {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL,
-                  SUBSCRIPTIONS_LABEL, RESULTS_LABEL, "🏠 منوی اصلی", "💵 قیمت و درآمد دستگاه‌ها", "💬 پشتیبانی"}
-    if text in navigation or text in PRODUCTS or text in MENU_TEXTS:
-        context.user_data.pop("ticket_until", None)
-    elif await ticket_input(update, context):
+    from .member_services import account_command
+    if text == "👤 حساب من":
+        await account_command(update, context)
         return
     # Accept buttons already sent during the user's earlier menu edits.
     text = {
@@ -288,7 +280,6 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data.pop("ticket_until", None)
     if update.effective_user and await require_membership(context, update.effective_user.id):
         context.user_data.pop("trade_awaiting_uid", None)
         context.user_data.pop("phone_requested_until", None)
@@ -441,7 +432,6 @@ async def delete_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if update.effective_user is None:
         return
     user_id = update.effective_user.id
-    context.user_data.pop("ticket_until", None)
     context.bot_data["contacts"].delete(user_id)
     context.user_data.pop("phone_requested_until", None)
     context.user_data.pop("trade_awaiting_uid", None)

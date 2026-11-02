@@ -99,7 +99,7 @@ def trade_menu_keyboard() -> ReplyKeyboardMarkup:
         [KeyboardButton(SUBSCRIPTIONS_LABEL, style="success")],
         [KeyboardButton(RESULTS_LABEL, style="primary")],
         [KeyboardButton(TRAINING_LABEL)],
-        [KeyboardButton("👤 حساب من"), KeyboardButton("🎫 تیکت‌های پشتیبانی")],
+        [KeyboardButton("👤 حساب من")],
         [KeyboardButton("🏠 منوی اصلی")],
     ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False,
        input_field_placeholder="یک گزینه را انتخاب کنید…")
@@ -111,7 +111,7 @@ def main_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [button(LIGHTNING_LABEL, "lightning", "primary")],
         [button(TRADE_LABEL, "trade", "success")],
-        [button("👤 حساب من", "member:account"), button("🎫 تیکت‌های پشتیبانی", "member:tickets")],
+        [button("👤 حساب من", "member:account")],
     ])
 
 

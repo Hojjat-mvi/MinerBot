@@ -14,7 +14,7 @@ from .broadcasts import (
 )
 from .channel_setup import channel_id_command, discover_channel_id
 from .commands import configure_command_menu, trade_command, nodes_command, support_command, help_command, unknown_command
-from .member_services import account_command, tickets_command, performance_command, new_ticket, ticket_callback, ticket_queue, reply_ticket
+from .member_services import account_command, performance_command
 from .performance import performance_callback, performance_admin
 from .rewards import reward_join_request
 from .contacts import ContactStore
@@ -33,11 +33,8 @@ def build_application(settings: Settings) -> Application:
     application.bot_data["settings"] = settings
     application.bot_data["xt_verifier"] = XTVerifier(settings)
     application.add_handler(TypeHandler(Update, remember_user), group=-1)
-    for name, handler in (("account", account_command), ("tickets", tickets_command),
-                          ("performance", performance_command), ("newticket", new_ticket),
-                          ("ticketqueue", ticket_queue), ("replyticket", reply_ticket)):
+    for name, handler in (("account", account_command), ("performance", performance_command)):
         application.add_handler(CommandHandler(name, handler, filters=filters.ChatType.PRIVATE))
-    application.add_handler(CallbackQueryHandler(ticket_callback, pattern=r"^ticket:"))
     application.add_handler(CallbackQueryHandler(performance_callback, pattern=r"^perf:"))
     application.add_handler(CommandHandler(["perfsetup", "addtrade", "voidtrade", "perftrades"], performance_admin, filters=filters.ChatType.PRIVATE))
     application.add_handler(CommandHandler("stop", stop_broadcasts, filters=filters.ChatType.PRIVATE))

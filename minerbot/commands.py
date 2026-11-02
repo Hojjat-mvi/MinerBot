@@ -20,7 +20,6 @@ USER_COMMANDS = (
     BotCommand("nodes", "⚡ دستگاه‌های لایتنینگ"),
     BotCommand("support", "💬 پشتیبانی"),
     BotCommand("account", "👤 حساب من"),
-    BotCommand("tickets", "🎫 تیکت‌های پشتیبانی"),
     BotCommand("performance", "📊 داشبورد عملکرد"),
     BotCommand("help", "❓ راهنمای استفاده"),
     BotCommand("stop", "🔕 لغو اطلاعیه‌های همگانی"),
@@ -30,7 +29,6 @@ USER_COMMANDS = (
 
 
 def cancel_input(context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data.pop("ticket_until", None)
     context.user_data.pop("trade_awaiting_uid", None)
     context.user_data.pop("phone_requested_until", None)
 
@@ -82,7 +80,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     "⚡ /nodes — معرفی دستگاه‌های لایتنینگ\n"
                     "💬 /support — ارتباط با پشتیبانی\n"
                     "👤 /account — حساب من\n"
-                    "🎫 /tickets — ثبت و پیگیری تیکت\n"
                     "📊 /performance — داشبورد عملکرد\n"
                     "🔕 /stop — لغو اطلاعیه‌ها\n"
                     "🔔 /subscribe — فعال‌سازی اطلاعیه‌ها\n"

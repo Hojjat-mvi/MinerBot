@@ -10,7 +10,7 @@ class TelegramRenderingTests(unittest.TestCase):
     def test_slash_command_remains_contiguous(self):
         self.assertIn('/deletephone', rtl_html('راهنما\n/deletephone'))
 
-    def test_expanded_long_ticket_is_split_without_losing_content(self):
+    def test_expanded_long_message_is_split_without_losing_content(self):
         body = 'a ' * 2000 + '<>&' + '😀' * 1000
         parts = telegram_text_parts(body)
         self.assertGreater(len(parts), 1)

@@ -336,8 +336,6 @@ retention policies. This code has not been live-tested or deployed yet.
 ### Member services
 
 - `/account`: private Telegram ID, masked registered phone, saved XT UID and cached eligibility result/time. This does not assert current VIP membership or payment status.
-- `/tickets`: create, view and close your own tickets. Tickets and replies use the existing persistent SQLite volume. Up to three open tickets per user; new requests are limited to one per minute. Text only, up to 2,000 UTF-16 units. After a response, open a new ticket referencing the previous number if further help is needed.
-- Admins listed in `TRADE_ADMIN_IDS` use `/ticketqueue` to see the oldest ten open requests, then `/replyticket ID response`. The reply is saved before notification; users can retrieve it even if Telegram delivery fails. No separate automatic admin alerts are sent. Ticket text remains stored after `/deletephone`; that command deletes the phone profile only. Avoid requesting credentials in tickets.
 - `/performance` and the existing trade performance button open the shared ledger dashboard. This is the group's performance, never a user's XT balance. The earlier static report is accessible separately and is not imported as fabricated trades.
 
 ### Performance ledger
