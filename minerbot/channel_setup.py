@@ -12,14 +12,6 @@ from telegram.ext import ContextTypes
 PREFIX = "AHURA-CHANNEL-ID:"
 
 
-async def my_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_user is not None:
-        await context.bot.send_message(
-            chat_id=update.effective_user.id,
-            text=f"شناسهٔ تلگرام شما:\n{update.effective_user.id}",
-        )
-
-
 async def channel_id_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     settings = context.bot_data["settings"]

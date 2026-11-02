@@ -33,7 +33,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_application_builds_without_network(self):
         application = build_application(Settings(token="123:fake-token"))
-        self.assertEqual(len(application.handlers[0]), 10)
+        self.assertEqual(len(application.handlers[0]), 14)
         self.assertTrue(application.error_handlers)
 
 

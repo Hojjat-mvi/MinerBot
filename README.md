@@ -287,6 +287,22 @@ Existing support/sales contacts are retained only in the Lightning section.
 Configure secure VIP admission with `XT_REWARD_CHANNEL_ID` and `TRADE_ADMIN_IDS`
 on each running machine. Legacy shared invites are never distributed.
 
-Private-channel ID discovery: use `/myid`, configure `TRADE_ADMIN_IDS`, then
+Private-channel ID discovery: use `/help`, configure `TRADE_ADMIN_IDS`, then
 `/channelid` and publish its one-time setup code in the channel. See `DEPLOY.md`.
 Forwarding is not required; the bot reports the ID privately to the authorized admin.
+
+## Native Telegram command menu
+
+Startup registers the native commands Menu button for private chats with Persian
+labels: `/menu`, `/trade`, `/nodes`, `/support`, `/help`, `/deletephone`.
+`/start` still welcomes users but is omitted from the list to avoid duplicating
+`/menu`. `/help` also shows the sender's Telegram ID, replacing `/myid`.
+`/channelid` remains an admin-only setup command and is not advertised to users.
+`/approveuid` is removed. Unknown commands return a helpful Menu/Help prompt.
+
+Trade and node commands keep membership checks; trade also requires phone
+registration. Help, support, and deletion remain accessible without joining.
+Navigation commands cancel pending UID/contact input. Telegram controls the Menu
+button's appearance, color, and localization. A temporary registration error is
+logged without stopping the bot; the command handlers still work when typed.
+These settings take effect after deploying and restarting the bot.

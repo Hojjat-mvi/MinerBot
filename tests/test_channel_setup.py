@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 from telegram.constants import ChatMemberStatus
 
-from minerbot.channel_setup import PREFIX, channel_id_command, discover_channel_id, my_id
+from minerbot.channel_setup import PREFIX, channel_id_command, discover_channel_id
 from minerbot.config import Settings
 
 
@@ -63,7 +63,3 @@ class ChannelSetupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.context.bot_data["channel_setup_requests"]), 1)
         self.assertTrue(old.isdisjoint(self.context.bot_data["channel_setup_requests"]))
 
-    async def test_myid_returns_only_requesters_identity(self):
-        await my_id(SimpleNamespace(effective_user=SimpleNamespace(id=99)), self.context)
-        self.assertEqual(self.bot.send_message.call_args.kwargs["chat_id"], 99)
-        self.assertIn("99", self.bot.send_message.call_args.kwargs["text"])

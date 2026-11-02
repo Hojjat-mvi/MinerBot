@@ -7,7 +7,8 @@ from telegram.ext import Application, CallbackQueryHandler, ChatJoinRequestHandl
 
 from .config import Settings, load_settings
 from .xt import XTVerifier
-from .channel_setup import my_id, channel_id_command, discover_channel_id
+from .channel_setup import channel_id_command, discover_channel_id
+from .commands import configure_command_menu, trade_command, nodes_command, support_command, help_command, unknown_command
 from .rewards import reward_join_request
 from .contacts import ContactStore
 from .logging_setup import configure_logging
@@ -15,20 +16,24 @@ from .handlers import callback_handler, handle_error, handle_messages, handle_co
 
 
 def build_application(settings: Settings) -> Application:
-    application = Application.builder().token(settings.token).build()
+    application = Application.builder().token(settings.token).post_init(configure_command_menu).build()
     application.bot_data["contacts"] = ContactStore(settings.data_dir / "contacts.sqlite3")
     application.bot_data["settings"] = settings
     application.bot_data["xt_verifier"] = XTVerifier(settings)
     application.add_handler(CommandHandler("start", start, filters=filters.ChatType.PRIVATE))
     application.add_handler(CommandHandler("menu", menu, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("trade", trade_command, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("nodes", nodes_command, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("support", support_command, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("help", help_command, filters=filters.ChatType.PRIVATE))
     application.add_handler(CommandHandler("deletephone", delete_phone, filters=filters.ChatType.PRIVATE))
     application.add_handler(MessageHandler(filters.ChatType.PRIVATE & filters.CONTACT, handle_contact))
-    application.add_handler(CommandHandler("myid", my_id, filters=filters.ChatType.PRIVATE))
     application.add_handler(CommandHandler("channelid", channel_id_command, filters=filters.ChatType.PRIVATE))
     application.add_handler(MessageHandler(filters.UpdateType.CHANNEL_POST & filters.TEXT, discover_channel_id))
     application.add_handler(ChatJoinRequestHandler(reward_join_request))
     application.add_handler(CallbackQueryHandler(callback_handler))
     application.add_handler(MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, handle_messages))
+    application.add_handler(MessageHandler(filters.ChatType.PRIVATE & filters.COMMAND, unknown_command))
     application.add_error_handler(handle_error)
     return application
 

@@ -145,7 +145,7 @@ active record, but historical operator backups require a separate retention poli
 
 ## Discover a private channel ID with forwarding disabled
 
-1. In a private chat with this bot, send `/myid`. It returns only your own numeric
+1. In a private chat with this bot, send `/help`. It returns only your own numeric
    Telegram user ID and does not require the VIP channel to be configured.
 2. Put that ID in server `.env`: `TRADE_ADMIN_IDS=YOUR_ID`. Restart the bot to load it.
 3. Privately send `/channelid`. Only configured admins receive a 10-minute code.
