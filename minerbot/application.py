@@ -8,7 +8,7 @@ from telegram.ext import Application, CallbackQueryHandler, ChatJoinRequestHandl
 from .config import Settings, load_settings
 from .xt import XTVerifier
 from .channel_setup import my_id, channel_id_command, discover_channel_id
-from .rewards import approve_uid, reward_join_request
+from .rewards import reward_join_request
 from .contacts import ContactStore
 from .logging_setup import configure_logging
 from .handlers import callback_handler, handle_error, handle_messages, handle_contact, delete_phone, menu, start
@@ -26,7 +26,6 @@ def build_application(settings: Settings) -> Application:
     application.add_handler(CommandHandler("myid", my_id, filters=filters.ChatType.PRIVATE))
     application.add_handler(CommandHandler("channelid", channel_id_command, filters=filters.ChatType.PRIVATE))
     application.add_handler(MessageHandler(filters.UpdateType.CHANNEL_POST & filters.TEXT, discover_channel_id))
-    application.add_handler(CommandHandler("approveuid", approve_uid, filters=filters.ChatType.PRIVATE))
     application.add_handler(ChatJoinRequestHandler(reward_join_request))
     application.add_handler(CallbackQueryHandler(callback_handler))
     application.add_handler(MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, handle_messages))

@@ -102,25 +102,26 @@ class ContactStore:
         with closing(self._connect()) as connection:
             return connection.execute("SELECT 1 FROM reward_bindings WHERE (xt_uid=? AND telegram_user_id!=?) OR (telegram_user_id=? AND xt_uid!=?)", (uid, user_id, user_id, uid)).fetchone() is not None
 
-    def request_ownership(self, user_id: int, uid: str) -> None:
-        with closing(self._connect()) as connection, connection:
-            connection.execute("INSERT INTO ownership_requests VALUES (?, ?, ?) ON CONFLICT(telegram_user_id) DO UPDATE SET xt_uid=excluded.xt_uid, requested_at=excluded.requested_at", (user_id, uid, datetime.now(timezone.utc).isoformat()))
-
-    def ownership_pending(self, user_id: int, uid: str) -> bool:
-        with closing(self._connect()) as connection:
-            return connection.execute("SELECT 1 FROM ownership_requests r JOIN contacts c USING(telegram_user_id) WHERE r.telegram_user_id=? AND r.xt_uid=? AND c.xt_uid=? AND c.xt_status='eligible'", (user_id, uid, uid)).fetchone() is not None
-
-    def approve_binding(self, user_id: int, uid: str, admin_id: int) -> None:
+    def claim_binding(self, user_id: int, uid: str) -> None:
+        """Atomically assign an eligible UID to its first Telegram claimant."""
         from .rewards import RewardConflict
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
-            row = connection.execute("SELECT 1 FROM ownership_requests r JOIN contacts c USING(telegram_user_id) WHERE r.telegram_user_id=? AND r.xt_uid=? AND c.xt_uid=? AND c.xt_status='eligible'", (user_id, uid, uid)).fetchone()
-            if row is None:
+            contact = connection.execute(
+                "SELECT 1 FROM contacts WHERE telegram_user_id=? AND xt_uid=? AND xt_status='eligible'",
+                (user_id, uid),
+            ).fetchone()
+            if contact is None:
                 raise RewardConflict()
-            existing = connection.execute("SELECT xt_uid, telegram_user_id FROM reward_bindings WHERE xt_uid=? OR telegram_user_id=?", (uid, user_id)).fetchall()
+            existing = connection.execute(
+                "SELECT xt_uid, telegram_user_id FROM reward_bindings WHERE xt_uid=? OR telegram_user_id=?",
+                (uid, user_id),
+            ).fetchall()
             if existing and existing != [(uid, user_id)]:
                 raise RewardConflict()
-            connection.execute("INSERT OR IGNORE INTO reward_bindings VALUES (?, ?, ?, ?)", (uid, user_id, admin_id, datetime.now(timezone.utc).isoformat()))
+            # Keep the existing schema: approved_by=0 denotes automatic XT qualification.
+            connection.execute("INSERT OR IGNORE INTO reward_bindings VALUES (?, ?, 0, ?)",
+                               (uid, user_id, datetime.now(timezone.utc).isoformat()))
             connection.execute("DELETE FROM ownership_requests WHERE telegram_user_id=?", (user_id,))
 
     def save_admission(self, user_id: int, uid: str, channel_id: int, digest: str, expires: int) -> None:

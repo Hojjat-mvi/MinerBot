@@ -141,7 +141,7 @@ class TradeFlowTests(unittest.IsolatedAsyncioTestCase):
                                    revoke_chat_invite_link=AsyncMock(), get_chat_member=AsyncMock(return_value=SimpleNamespace(status=ChatMemberStatus.MEMBER)))
         self.verifier = SimpleNamespace(verify=AsyncMock(return_value=Eligibility(True, True)))
         self.context = SimpleNamespace(bot=self.bot, user_data={},
-                                       bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True), save_uid=Mock(), binding_conflicts=Mock(return_value=False), binding_matches=Mock(return_value=True), take_xt_slot=Mock(return_value=True), request_ownership=Mock(), save_admission=Mock()), "settings": self.settings, "xt_verifier": self.verifier})
+                                       bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True), save_uid=Mock(), binding_conflicts=Mock(return_value=False), binding_matches=Mock(return_value=True), take_xt_slot=Mock(return_value=True), request_ownership=Mock(), claim_binding=Mock(), save_admission=Mock()), "settings": self.settings, "xt_verifier": self.verifier})
         self.user = SimpleNamespace(id=42)
 
     async def callback(self, data):

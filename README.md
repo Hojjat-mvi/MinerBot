@@ -160,9 +160,8 @@ Telegram input is handled in private chats only. No exact deposit amounts,
 financial records, or credentials are sent to Telegram or written to bot logs.
 UID entry expires after 10 minutes and is cancelled by navigation.
 
-The XT API checks the submitted UID; it cannot prove account ownership. Secure
-VIP admission therefore requires independent admin ownership review before a
-persistent binding is approved. No exchange trading or fund-transfer operations
+The XT API checks the submitted UID; it cannot prove account ownership. VIP
+admission automatically binds each eligible UID to its first successful claimant. No exchange trading or fund-transfer operations
 are implemented.
 
 A read-only live check on 2026-10-29 confirmed affiliate API access, an exact
@@ -200,22 +199,20 @@ with Invite Users permission. `XT_REWARD_CHANNEL_URL` is legacy and is never sen
 Revoke the previously shared invite in Telegram; existing messages cannot be
 made safe merely by deploying new code. Review already admitted members manually.
 
-A new eligible UID requires independent account-ownership review by support.
-The applicant receives their Telegram ID and contacts support; a configured admin
-must confirm control of the XT account before sending the bot:
+After the user submits a UID once, a fresh successful XT check automatically
+claims it for that Telegram account in a transaction. The database permits only
+one UID per Telegram account and one Telegram account per UID. No admin approval,
+`/approveuid` command, or repeated UID submission is required in the normal flow.
+Existing eligible contact rows are not preassigned: the first successful live
+claim wins. Existing bindings remain valid, including earlier admin-approved ones.
 
-```text
-/approveuid TELEGRAM_USER_ID XT_UID
-```
+This is explicitly a first-successful-claim policy, not proof of exchange account
+ownership. Users are responsible for keeping their UID private. If another person
+knows an unclaimed eligible UID, they can claim it first; the API cannot resolve
+that ownership dispute. A claimed UID cannot be reassigned through a public command.
 
-This is an administrative attestation, not automated ownership verification.
-UID knowledge or an eligibility result alone is not ownership evidence. The
-command accepts only pending requests, checks XT eligibility again, and records
-a durable one-UID/one-Telegram-account binding. Pre-existing eligible contact rows
-are not silently trusted or bound; they require this review too.
-
-The user then repeats the eligibility check. The bot creates a 10-minute
-join-request link, stores only its hash, and associates it with that Telegram ID.
+The bot immediately creates a 10-minute join-request link, stores only its hash,
+and associates it with the claimant's Telegram ID. No manual review is involved.
 At admission it rechecks phone registration, binding, both public channels, and
 XT referral/deposit conditions. Forwarded, expired, unknown, consumed, or replaced
 links do not authorize another user. A wrong user's request does not consume

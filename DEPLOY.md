@@ -96,15 +96,17 @@ restarting a PC fallback instance.
 2. Add the bot as an administrator of the VIP channel with Invite Users rights.
 3. Set `XT_REWARD_CHANNEL_ID=-100...` and `TRADE_ADMIN_IDS=123456,...` in server `.env`.
 4. Back up SQLite before deploying its additive security-table migration.
-5. After an eligible user's ownership is independently verified, a trusted admin
-   sends `/approveuid TELEGRAM_USER_ID XT_UID` to the bot in a private chat.
-6. The user repeats the check and gets a 10-minute identity-bound join-request
-   link. Membership and XT conditions are checked again before approval.
+5. The user submits their UID once. A successful XT check automatically claims
+   it and immediately returns a personal 10-minute join-request link.
+6. The user requests to join. The bot automatically checks membership and XT
+   conditions again, then approves the matching Telegram account.
 
-Do not approve ownership merely because someone supplies a working UID.
-The API cannot prove control of the exchange account. Existing eligible rows
-require review; no automatic first-claim ownership is accepted. A UID cannot
-be approved for two Telegram IDs. Binding reassignment has no public command.
+No `/approveuid` command or manual ownership approval is required or exposed.
+The first successful claimant gets the UID; one UID cannot be claimed by two
+Telegram accounts, and each Telegram account can claim only one UID. Users are
+responsible for their UIDs. This does not prove exchange ownership; someone who
+knows another person's unclaimed eligible UID can claim it first. Binding
+reassignment has no public command. `TRADE_ADMIN_IDS` is only for channel setup.
 
 Unknown/foreign/expired requests to the configured VIP channel are declined.
 Coordinate paid/manual member admissions with channel administrators; requests
