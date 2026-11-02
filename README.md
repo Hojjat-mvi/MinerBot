@@ -306,3 +306,29 @@ Navigation commands cancel pending UID/contact input. Telegram controls the Menu
 button's appearance, color, and localization. A temporary registration error is
 logged without stopping the bot; the command handlers still work when typed.
 These settings take effect after deploying and restarting the bot.
+
+## Admin text broadcasts
+
+Configured `TRADE_ADMIN_IDS` may privately send `/broadcast Your message`, or
+reply to a text message with `/broadcast`. The bot privately previews the exact
+outgoing text and shows the current audience count. Nothing is broadcast until
+the same admin presses Confirm. Drafts expire after ten minutes. `/broadcaststatus`
+shows the latest job; `/cancelbroadcast` stops the admin's active job (messages
+already sent cannot be recalled). Admin commands are hidden from the public menu.
+
+Users who interact in private chats are recorded by Telegram ID. Existing phone
+registrations are seeded once; people who never interacted or whose IDs were
+never saved cannot be reached. `/stop` disables broadcasts without disabling bot
+services; `/subscribe` or `/start` re-enables them. Normal menu interaction does
+not undo opt-out. Each broadcast includes an opt-out reminder. Blocked users are
+unsubscribed automatically. Phones and XT UIDs are not included in broadcast jobs.
+
+Recipients and delivery status are stored in the private SQLite volume. Delivery
+is paced and Telegram rate-limit responses are respected. A restart/shutdown
+interrupts the job; it does not silently resume or resend uncertain deliveries.
+Network timeouts can mean Telegram accepted a message: these are marked uncertain
+and not retried automatically. Review counts before composing another broadcast.
+Text-only broadcasts are implemented; photos/videos are not yet supported.
+Broadcast bodies are cleared after completion/interruption/cancellation. Recipient
+IDs/statuses remain for operational reporting and must be covered by backup and
+retention policies. This code has not been live-tested or deployed yet.

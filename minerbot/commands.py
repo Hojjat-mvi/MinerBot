@@ -20,6 +20,8 @@ USER_COMMANDS = (
     BotCommand("nodes", "⚡ دستگاه‌های لایتنینگ"),
     BotCommand("support", "💬 پشتیبانی"),
     BotCommand("help", "❓ راهنمای استفاده"),
+    BotCommand("stop", "🔕 لغو اطلاعیه‌های همگانی"),
+    BotCommand("subscribe", "🔔 دریافت دوبارهٔ اطلاعیه‌ها"),
     BotCommand("deletephone", "🗑 حذف شماره و UID پرونده"),
 )
 
@@ -75,6 +77,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     "📈 /trade — اتاق ترید و دریافت اشتراک\n"
                     "⚡ /nodes — معرفی دستگاه‌های لایتنینگ\n"
                     "💬 /support — ارتباط با پشتیبانی\n"
+                    "🔕 /stop — لغو اطلاعیه‌ها\n"
+                    "🔔 /subscribe — فعال‌سازی اطلاعیه‌ها\n"
                     "🗑 /deletephone — حذف شماره و UID پرونده؛ سابقهٔ تخصیص اشتراک برای جلوگیری از استفادهٔ تکراری حفظ می‌شود.\n\n"
                     "برای ورود به ترید، ابتدا شمارهٔ خود را با دکمهٔ اشتراک‌گذاری ارسال کنید. "
                     "برای اشتراک رایگان، UID را در بخش بررسی حساب وارد کنید. رمز عبور یا کلید API نفرستید.\n\n"

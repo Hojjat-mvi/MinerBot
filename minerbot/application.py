@@ -2,11 +2,16 @@
 
 import logging
 
+from telegram import Update
 from telegram.error import TelegramError
-from telegram.ext import Application, CallbackQueryHandler, ChatJoinRequestHandler, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CallbackQueryHandler, ChatJoinRequestHandler, CommandHandler, MessageHandler, TypeHandler, filters
 
 from .config import Settings, load_settings
 from .xt import XTVerifier
+from .broadcasts import (
+    remember_user, stop_broadcasts, subscribe, broadcast_command,
+    broadcast_callback, broadcast_status, shutdown_broadcasts, cancel_broadcast_command,
+)
 from .channel_setup import channel_id_command, discover_channel_id
 from .commands import configure_command_menu, trade_command, nodes_command, support_command, help_command, unknown_command
 from .rewards import reward_join_request
@@ -15,11 +20,23 @@ from .logging_setup import configure_logging
 from .handlers import callback_handler, handle_error, handle_messages, handle_contact, delete_phone, menu, start
 
 
+async def initialize_runtime(application: Application) -> None:
+    application.bot_data["contacts"].interrupt_broadcasts()
+    await configure_command_menu(application)
+
+
 def build_application(settings: Settings) -> Application:
-    application = Application.builder().token(settings.token).post_init(configure_command_menu).build()
+    application = Application.builder().token(settings.token).post_init(initialize_runtime).post_stop(shutdown_broadcasts).build()
     application.bot_data["contacts"] = ContactStore(settings.data_dir / "contacts.sqlite3")
     application.bot_data["settings"] = settings
     application.bot_data["xt_verifier"] = XTVerifier(settings)
+    application.add_handler(TypeHandler(Update, remember_user), group=-1)
+    application.add_handler(CommandHandler("stop", stop_broadcasts, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("subscribe", subscribe, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("broadcast", broadcast_command, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("broadcaststatus", broadcast_status, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("cancelbroadcast", cancel_broadcast_command, filters=filters.ChatType.PRIVATE))
+    application.add_handler(CallbackQueryHandler(broadcast_callback, pattern=r"^broadcast:"))
     application.add_handler(CommandHandler("start", start, filters=filters.ChatType.PRIVATE))
     application.add_handler(CommandHandler("menu", menu, filters=filters.ChatType.PRIVATE))
     application.add_handler(CommandHandler("trade", trade_command, filters=filters.ChatType.PRIVATE))

@@ -51,6 +51,22 @@ class ContactStore:
             connection.execute("""CREATE TABLE IF NOT EXISTS xt_check_limits (
                 telegram_user_id INTEGER PRIMARY KEY, next_check_at REAL NOT NULL
             )""")
+            connection.execute("""CREATE TABLE IF NOT EXISTS broadcast_users (
+                telegram_user_id INTEGER PRIMARY KEY, subscribed INTEGER NOT NULL DEFAULT 1
+            )""")
+            connection.execute("CREATE TABLE IF NOT EXISTS app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+            if connection.execute("SELECT 1 FROM app_metadata WHERE key='broadcast_users_migrated'").fetchone() is None:
+                connection.execute("INSERT OR IGNORE INTO broadcast_users (telegram_user_id) SELECT telegram_user_id FROM contacts")
+                connection.execute("INSERT INTO app_metadata VALUES ('broadcast_users_migrated', '1')")
+            connection.execute("""CREATE TABLE IF NOT EXISTS broadcasts (
+                id TEXT PRIMARY KEY, admin_id INTEGER NOT NULL, body TEXT NOT NULL,
+                state TEXT NOT NULL, created_at REAL NOT NULL
+            )""")
+            connection.execute("""CREATE TABLE IF NOT EXISTS broadcast_deliveries (
+                broadcast_id TEXT NOT NULL, telegram_user_id INTEGER NOT NULL,
+                state TEXT NOT NULL DEFAULT 'pending',
+                PRIMARY KEY (broadcast_id, telegram_user_id)
+            )""")
             connection.commit()
             return connection
         except Exception:
@@ -151,3 +167,84 @@ class ContactStore:
                 return False
             connection.execute("INSERT INTO xt_check_limits VALUES (?, ?) ON CONFLICT(telegram_user_id) DO UPDATE SET next_check_at=excluded.next_check_at", (user_id, now + 15))
             return True
+
+
+    def remember_user(self, user_id: int) -> None:
+        with closing(self._connect()) as connection, connection:
+            connection.execute("INSERT OR IGNORE INTO broadcast_users (telegram_user_id) VALUES (?)", (user_id,))
+
+    def subscribe_user(self, user_id: int, enabled: bool) -> None:
+        with closing(self._connect()) as connection, connection:
+            connection.execute("INSERT INTO broadcast_users VALUES (?, ?) ON CONFLICT(telegram_user_id) DO UPDATE SET subscribed=excluded.subscribed", (user_id, int(enabled)))
+
+    def is_subscribed(self, user_id: int) -> bool:
+        with closing(self._connect()) as connection:
+            row = connection.execute("SELECT subscribed FROM broadcast_users WHERE telegram_user_id=?", (user_id,)).fetchone()
+            return bool(row and row[0])
+
+    def broadcast_audience(self) -> int:
+        with closing(self._connect()) as connection:
+            return connection.execute("SELECT COUNT(*) FROM broadcast_users WHERE subscribed=1").fetchone()[0]
+
+    def draft_broadcast(self, draft_id: str, admin_id: int, body: str, now: float) -> None:
+        with closing(self._connect()) as connection, connection:
+            connection.execute("UPDATE broadcasts SET state='cancelled', body='' WHERE admin_id=? AND state='draft'", (admin_id,))
+            connection.execute("INSERT INTO broadcasts VALUES (?, ?, ?, 'draft', ?)", (draft_id, admin_id, body, now))
+
+    def broadcast_info(self, draft_id: str, admin_id: int) -> dict | None:
+        with closing(self._connect()) as connection:
+            connection.row_factory = sqlite3.Row
+            row = connection.execute("SELECT * FROM broadcasts WHERE id=? AND admin_id=?", (draft_id, admin_id)).fetchone()
+            return dict(row) if row else None
+
+    def confirm_broadcast(self, draft_id: str, admin_id: int, now: float) -> bool:
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            if connection.execute("SELECT 1 FROM broadcasts WHERE state='running'").fetchone():
+                return False
+            changed = connection.execute("UPDATE broadcasts SET state='running' WHERE id=? AND admin_id=? AND state='draft' AND created_at>?", (draft_id, admin_id, now - 600)).rowcount
+            if not changed:
+                return False
+            connection.execute("INSERT INTO broadcast_deliveries (broadcast_id, telegram_user_id) SELECT ?, telegram_user_id FROM broadcast_users WHERE subscribed=1", (draft_id,))
+            return True
+
+    def cancel_broadcast(self, draft_id: str, admin_id: int) -> bool:
+        with closing(self._connect()) as connection, connection:
+            return connection.execute("UPDATE broadcasts SET state='cancelled', body='' WHERE id=? AND admin_id=? AND state='draft'", (draft_id, admin_id)).rowcount == 1
+
+    def next_broadcast_recipient(self, draft_id: str) -> int | None:
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute("SELECT telegram_user_id FROM broadcast_deliveries WHERE broadcast_id=? AND state='pending' ORDER BY telegram_user_id LIMIT 1", (draft_id,)).fetchone()
+            if not row:
+                return None
+            connection.execute("UPDATE broadcast_deliveries SET state='sending' WHERE broadcast_id=? AND telegram_user_id=?", (draft_id, row[0]))
+            return row[0]
+
+    def record_delivery(self, draft_id: str, user_id: int, state: str) -> None:
+        if state not in {'sent', 'failed', 'uncertain', 'skipped'}:
+            raise ValueError("Invalid delivery state")
+        with closing(self._connect()) as connection, connection:
+            connection.execute("UPDATE broadcast_deliveries SET state=? WHERE broadcast_id=? AND telegram_user_id=?", (state, draft_id, user_id))
+
+    def finish_broadcast(self, draft_id: str, state: str) -> None:
+        if state not in {'completed', 'interrupted'}:
+            raise ValueError("Invalid broadcast state")
+        with closing(self._connect()) as connection, connection:
+            connection.execute("UPDATE broadcast_deliveries SET state='uncertain' WHERE broadcast_id=? AND state='sending'", (draft_id,))
+            connection.execute("UPDATE broadcasts SET state=?, body='' WHERE id=?", (state, draft_id))
+
+    def interrupt_broadcasts(self) -> None:
+        with closing(self._connect()) as connection, connection:
+            connection.execute("UPDATE broadcast_deliveries SET state='uncertain' WHERE state='sending'")
+            connection.execute("UPDATE broadcasts SET state='interrupted', body='' WHERE state='running'")
+            connection.execute("UPDATE broadcasts SET state='cancelled', body='' WHERE state='draft'")
+
+    def latest_broadcast(self, admin_id: int) -> str | None:
+        with closing(self._connect()) as connection:
+            row = connection.execute("SELECT id FROM broadcasts WHERE admin_id=? ORDER BY created_at DESC LIMIT 1", (admin_id,)).fetchone()
+            return row[0] if row else None
+
+    def delivery_counts(self, draft_id: str) -> dict[str, int]:
+        with closing(self._connect()) as connection:
+            return dict(connection.execute("SELECT state, COUNT(*) FROM broadcast_deliveries WHERE broadcast_id=? GROUP BY state", (draft_id,)).fetchall())
