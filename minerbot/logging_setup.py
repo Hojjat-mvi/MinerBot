@@ -1,6 +1,7 @@
 """Redact configured credentials, including library exception tracebacks."""
 
 import logging
+import re
 import traceback
 
 from .config import Settings
@@ -17,7 +18,7 @@ class SecretFilter(logging.Filter):
     def _redact(self, text: str) -> str:
         for secret in self._secrets:
             text = text.replace(secret, "[REDACTED]")
-        return text
+        return re.sub(r"https://t\.me/(?:\+|joinchat/)[A-Za-z0-9_-]+", "[REDACTED_INVITE]", text)
 
     def filter(self, record: logging.LogRecord) -> bool:
         record.msg = self._redact(record.getMessage())

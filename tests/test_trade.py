@@ -136,10 +136,12 @@ class TradeFlowTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.settings = Settings(token="fake", xt_api_key="key", xt_api_secret="secret", xt_referral_code="AHURA")
         self.bot = SimpleNamespace(send_message=AsyncMock(), send_photo=AsyncMock(),
-                                   get_chat_member=AsyncMock(return_value=SimpleNamespace(status=ChatMemberStatus.MEMBER)))
+                                   get_chat=AsyncMock(return_value=SimpleNamespace(type="channel", username=None)),
+                                   create_chat_invite_link=AsyncMock(return_value=SimpleNamespace(invite_link="https://t.me/+test_bound_invite")),
+                                   revoke_chat_invite_link=AsyncMock(), get_chat_member=AsyncMock(return_value=SimpleNamespace(status=ChatMemberStatus.MEMBER)))
         self.verifier = SimpleNamespace(verify=AsyncMock(return_value=Eligibility(True, True)))
         self.context = SimpleNamespace(bot=self.bot, user_data={},
-                                       bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True), save_uid=Mock()), "settings": self.settings, "xt_verifier": self.verifier})
+                                       bot_data={"contacts": SimpleNamespace(has_contact=Mock(return_value=True), save_uid=Mock(), binding_conflicts=Mock(return_value=False), binding_matches=Mock(return_value=True), take_xt_slot=Mock(return_value=True), request_ownership=Mock(), save_admission=Mock()), "settings": self.settings, "xt_verifier": self.verifier})
         self.user = SimpleNamespace(id=42)
 
     async def callback(self, data):
@@ -246,11 +248,13 @@ class RewardTests(unittest.IsolatedAsyncioTestCase):
     async def test_qualified_user_gets_reward_link_when_configured(self):
         from dataclasses import replace
         link = "https://t.me/+test_private_invite"
-        self.context.bot_data["settings"] = replace(self.settings, xt_reward_channel_url=link)
+        self.context.bot_data["settings"] = replace(self.settings, xt_reward_channel_url=link, xt_reward_channel_id=-1001234567890)
         await self.callback("trade:check")
         await self.text("123456")
         keyboard = self.bot.send_message.call_args.kwargs["reply_markup"]
-        self.assertEqual(keyboard.inline_keyboard[0][0].url, link)
+        self.assertEqual(keyboard.inline_keyboard[0][0].url, "https://t.me/+test_bound_invite")
+        self.bot.create_chat_invite_link.assert_awaited_once()
+        self.assertNotIn(link, str(self.bot.send_message.call_args.kwargs))
 
     async def test_unqualified_or_failed_checks_never_expose_reward(self):
         from dataclasses import replace
@@ -267,7 +271,7 @@ class RewardTests(unittest.IsolatedAsyncioTestCase):
     async def test_missing_link_shows_reward_pending(self):
         await self.callback("trade:check")
         await self.text("123456")
-        self.assertIn("لینک کانال خصوصی هنوز آماده نشده", self.bot.send_message.call_args.kwargs["text"])
+        self.assertIn("عضویت امن کانال هنوز پیکربندی نشده", self.bot.send_message.call_args.kwargs["text"])
 
     async def test_trade_screen_does_not_expose_configured_reward(self):
         from dataclasses import replace

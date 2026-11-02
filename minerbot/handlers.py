@@ -21,6 +21,7 @@ from .keyboards import (
 from .presentation import rtl_html
 from .xt import XTUnavailable, normalize_uid
 from .contacts import normalize_phone
+from .rewards import issue_reward, RewardConflict
 
 logger = logging.getLogger(__name__)
 HOME_TEXT = "🏠 به اهوراماین خوش آمدید\n\nیکی از دو بخش زیر را انتخاب کنید:\n⚡ دستگاه‌های لایتنینگ: معرفی، قیمت و درآمد دستگاه‌ها\n📈 ترید با اهوراماین: بررسی شرایط حساب XT"
@@ -309,6 +310,12 @@ async def check_trade_uid(context: ContextTypes.DEFAULT_TYPE, user_id: int, text
     if now < context.user_data.get("trade_next_check_at", 0):
         await send_text(context, user_id, "⏱ لطفاً چند ثانیه صبر کنید\n\nسپس دوباره UID را ارسال کنید.", trade_keyboard(settings_for(context).xt_referral_url))
         return
+    if not context.bot_data["contacts"].take_xt_slot(user_id, time.time()):
+        await send_text(context, user_id, "⏱ لطفاً چند ثانیه صبر کنید و دوباره تلاش کنید.", trade_section_keyboard())
+        return
+    if context.bot_data["contacts"].binding_conflicts(user_id, uid):
+        await send_text(context, user_id, "⚠️ امکان استفاده از این UID برای این حساب تلگرام وجود ندارد. با پشتیبانی تماس بگیرید.", trade_section_keyboard())
+        return
     context.user_data["trade_next_check_at"] = now + 15
     context.bot_data["contacts"].save_uid(user_id, uid, status="submitted")
     try:
@@ -327,13 +334,23 @@ async def check_trade_uid(context: ContextTypes.DEFAULT_TYPE, user_id: int, text
     elif not result.sufficient_deposit:
         text = "🔎 نتیجهٔ بررسی حساب\n\n✅ کد دعوت اهوراماین تأیید شد.\n❌ مجموع واریز ثبت‌شده به حداقل ۱۰۰ USDT نرسیده است."
     else:
-        settings = settings_for(context)
-        if settings.xt_reward_channel_url:
-            await send_text(context, user_id,
-                            "🎉 شرایط حساب تأیید شد\n\nکد دعوت اهوراماین و مجموع واریز حداقل ۱۰۰ USDT تأیید شد.\nبرای دریافت پاداش، از دکمهٔ زیر وارد کانال خصوصی اهوراماین شوید.",
-                            reward_keyboard(settings.xt_reward_channel_url))
+        try:
+            state, link = await issue_reward(context, user_id, uid)
+        except (TelegramError, RewardConflict):
+            await send_text(context, user_id, "⚠️ ساخت درخواست عضویت انجام نشد. با پشتیبانی تماس بگیرید.", trade_section_keyboard())
             return
-        text = "✅ شرایط حساب تأیید شد\n\nکد دعوت اهوراماین و مجموع واریز حداقل ۱۰۰ USDT تأیید شد.\n🎁 شرایط دریافت پاداش را دارید؛ لینک کانال خصوصی هنوز آماده نشده است. لطفاً بعداً دوباره بررسی کنید."
+        if state == "invite":
+            await send_text(context, user_id,
+                            "🎉 شرایط حساب تأیید شد\n\nاین درخواست عضویت فقط برای حساب تلگرام شما معتبر است و ۱۰ دقیقه اعتبار دارد. پس از ارسال درخواست، شرایط شما دوباره بررسی می‌شود.",
+                            reward_keyboard(link))
+            return
+        if state == "review":
+            text = ("🔐 تأیید مالکیت حساب\n\nشرایط صرافی تأیید شد. برای جلوگیری از استفاده از UID دیگران، مالکیت حساب باید یک‌بار توسط پشتیبانی تأیید شود.\n"
+                    f"شناسهٔ تلگرام شما: {user_id}\nاین شناسه و UID صرافی را به پشتیبانی ارسال کنید؛ رمز عبور یا کلید API نفرستید.")
+        elif state == "conflict":
+            text = "⚠️ امکان تخصیص این UID وجود ندارد. با پشتیبانی تماس بگیرید."
+        else:
+            text = "✅ شرایط حساب تأیید شد\n\nعضویت امن کانال هنوز پیکربندی نشده است. با پشتیبانی تماس بگیرید."
     await send_text(context, user_id, text, trade_keyboard(settings_for(context).xt_referral_url))
 
 
@@ -366,7 +383,7 @@ async def require_trade_phone(context: ContextTypes.DEFAULT_TYPE, user_id: int) 
     context.user_data.pop("trade_awaiting_uid", None)
     context.user_data["phone_requested_until"] = time.monotonic() + 600
     await send_text(context, user_id,
-                    "📱 ثبت شماره برای ورود به اتاق ترید\n\nبرای استفاده از بخش ترید، شمارهٔ حساب تلگرام خود را با دکمهٔ زیر به اشتراک بگذارید.\nبا زدن دکمه، با ذخیرهٔ شماره در اهوراماین برای ثبت‌نام و پیگیری خدمات ترید موافقت می‌کنید. UID صرافی که بعداً ارسال می‌کنید نیز به همین پرونده اضافه می‌شود.\nشماره را تایپ نکنید و مخاطب شخص دیگری را نفرستید.\n\nبرای حذف شماره و UID ذخیره‌شده، دستور /deletephone را بفرستید. می‌توانید بدون ثبت شماره از بخش لایتنینگ استفاده کنید.",
+                    "📱 ثبت شماره برای ورود به اتاق ترید\n\nبرای استفاده از بخش ترید، شمارهٔ حساب تلگرام خود را با دکمهٔ زیر به اشتراک بگذارید.\nبا زدن دکمه، با ذخیرهٔ شماره در اهوراماین برای ثبت‌نام و پیگیری خدمات ترید موافقت می‌کنید. UID صرافی که بعداً ارسال می‌کنید نیز به همین پرونده اضافه می‌شود.\nشماره را تایپ نکنید و مخاطب شخص دیگری را نفرستید.\n\nبرای حذف شماره و UID پرونده، دستور /deletephone را بفرستید. سابقهٔ تخصیص اشتراک برای جلوگیری از استفادهٔ تکراری نگهداری می‌شود. می‌توانید بدون ثبت شماره از بخش لایتنینگ استفاده کنید.",
                     phone_keyboard())
     return False
 
@@ -405,7 +422,7 @@ async def delete_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     context.bot_data["contacts"].delete(user_id)
     context.user_data.pop("phone_requested_until", None)
     context.user_data.pop("trade_awaiting_uid", None)
-    await send_text(context, user_id, "🗑 شماره و UID ذخیره‌شدهٔ شما حذف شدند. برای ورود دوباره به ترید باید شماره را به اشتراک بگذارید.", persistent_menu_keyboard())
+    await send_text(context, user_id, "🗑 شماره و UID پروندهٔ شما حذف شدند و دعوت‌های استفاده‌نشده غیرفعال شدند. سابقهٔ تخصیص اشتراک برای جلوگیری از استفادهٔ تکراری حفظ می‌شود. برای ورود دوباره به ترید باید شماره را به اشتراک بگذارید.", persistent_menu_keyboard())
 
 
 async def show_subscriptions(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:

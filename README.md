@@ -160,9 +160,10 @@ Telegram input is handled in private chats only. No exact deposit amounts,
 financial records, or credentials are sent to Telegram or written to bot logs.
 UID entry expires after 10 minutes and is cancelled by navigation.
 
-This checks the **submitted UID**, not ownership of that XT account. It does not
-bind a Telegram identity to an exchange identity or grant trading privileges or access to funds. Account-ownership verification would
-need an additional agreed process before introducing such privileges.
+The XT API checks the submitted UID; it cannot prove account ownership. Secure
+VIP admission therefore requires independent admin ownership review before a
+persistent binding is approved. No exchange trading or fund-transfer operations
+are implemented.
 
 A read-only live check on 2026-10-29 confirmed affiliate API access, an exact
 referral-code match, and a below-threshold deposit response for a sample referred
@@ -190,27 +191,48 @@ The configured registration link is https://www.xtfarsi.net/ref/7YX74I.
 Deployment review (2026-10-29): exact threshold arithmetic and credential redaction
 are covered by regression tests. See `DEPLOY.md` for the ParsPack/root workflow.
 
-## Optional private-channel reward
+## Secure private-channel rewards
 
-Set `XT_REWARD_CHANNEL_URL` in the machine's `.env` when your private channel is
-ready (for example `https://t.me/+INVITE_CODE`). Until then, keep it blank: users
-who pass both XT conditions see an eligibility-confirmed/reward-pending message.
-With a link configured, a fresh successful check shows the private-channel join
-button. Failed referrals, low deposits, and API errors never receive that link.
-The reward link is redacted from logs and hidden in Settings representations.
+Shared invite delivery has been removed. Configure `XT_REWARD_CHANNEL_ID` with
+the private channel's numeric `-100...` ID and `TRADE_ADMIN_IDS` with trusted
+admin Telegram user IDs (comma-separated). The bot must be channel administrator
+with Invite Users permission. `XT_REWARD_CHANNEL_URL` is legacy and is never sent.
+Revoke the previously shared invite in Telegram; existing messages cannot be
+made safe merely by deploying new code. Review already admitted members manually.
 
-This is a shareable static invite, not identity binding or single-use admission.
-People may submit someone else's eligible UID or forward the invite. Before
-using this as strict access control, add account-ownership verification and
-controlled channel admission. These are not provided by the XT UID endpoints.
+A new eligible UID requires independent account-ownership review by support.
+The applicant receives their Telegram ID and contacts support; a configured admin
+must confirm control of the XT account before sending the bot:
 
-### Trade-room sections
+```text
+/approveuid TELEGRAM_USER_ID XT_UID
+```
 
-The trade room offers XT training, free subscription, and monthly subscription,
-with a bold Persian VPN reminder on the free-subscription screen. Free subscription uses the existing referral
-and total-deposit checks (not current balance). Training and monthly subscription
-are placeholders until content and pricing are supplied. Old menu text and
-`trade:check` callbacks remain supported; subsection navigation cancels UID input.
+This is an administrative attestation, not automated ownership verification.
+UID knowledge or an eligibility result alone is not ownership evidence. The
+command accepts only pending requests, checks XT eligibility again, and records
+a durable one-UID/one-Telegram-account binding. Pre-existing eligible contact rows
+are not silently trusted or bound; they require this review too.
+
+The user then repeats the eligibility check. The bot creates a 10-minute
+join-request link, stores only its hash, and associates it with that Telegram ID.
+At admission it rechecks phone registration, binding, both public channels, and
+XT referral/deposit conditions. Forwarded, expired, unknown, consumed, or replaced
+links do not authorize another user. A wrong user's request does not consume
+the intended recipient's link. Missing configuration or API failures never fall
+back to the legacy shared link. Consumed links are revoked where Telegram allows.
+
+Only links recorded by this flow are auto-approved in the configured channel.
+Other join requests are declined; coordinate manual paid admissions separately.
+Other admins must not distribute automatic-entry links or approve unverified
+users. The bot cannot prevent another channel admin from bypassing these controls.
+The condition remains **total deposits**, not current balance or net deposits.
+Existing memberships are not automatically removed or continuously monitored.
+
+Deleting a phone invalidates pending invitations and ownership requests but
+preserves reward bindings and rate-limit records to prevent UID reuse and reset
+abuse. This retained security record is disclosed in the registration/deletion
+messages. It is included in the same private SQLite volume and its backups.
 
 ## Trade phone registration
 
@@ -222,7 +244,7 @@ catalog access does not require a phone number. Existing users register once on
 their next trade entry; there is no database of prior phones to migrate.
 
 The SQLite database stores Telegram user ID, normalized international phone,
-consent/update timestamps, and the submitted XT UID with its latest check status. `/deletephone` removes the saved phone and gates
+consent/update timestamps, and the submitted XT UID with its latest check status. `/deletephone` removes the contact record and gates
 trade entry again. The bot attempts to delete the contact message after saving;
 Telegram may prevent message deletion. Bot-database deletion does not erase any
 copies already retained by Telegram or previous operator backups.
@@ -255,7 +277,7 @@ unavailable and never approve rewards. The user is informed before UID entry.
 
 Existing SQLite phone databases migrate automatically by adding nullable UID
 columns, without replacing phone rows. Back up the database before deploying a
-schema change. `/deletephone` deletes the whole contact row, including its UID.
+schema change. `/deletephone` deletes the contact row and pending admission rights; durable reward bindings remain to prevent reuse.
 The existing persistent Docker volume and backup requirements still apply.
 
 ### Trade performance and trade support
@@ -265,6 +287,9 @@ heading; it is manually maintained content, not a live exchange performance feed
 Trade support has a single destination, `@Ahurasupport_trading`, including the
 paid-subscription screen, account-check screens, and trade-specific errors.
 Existing support/sales contacts are retained only in the Lightning section.
-Configure the private VIP reward invite in `XT_REWARD_CHANNEL_URL` on each running
-machine; it is never stored in source or `.env.example`. Rewards remain gated by
-a fresh successful referral and deposit check.
+Configure secure VIP admission with `XT_REWARD_CHANNEL_ID` and `TRADE_ADMIN_IDS`
+on each running machine. Legacy shared invites are never distributed.
+
+Private-channel ID discovery: use `/myid`, configure `TRADE_ADMIN_IDS`, then
+`/channelid` and publish its one-time setup code in the channel. See `DEPLOY.md`.
+Forwarding is not required; the bot reports the ID privately to the authorized admin.

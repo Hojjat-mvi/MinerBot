@@ -35,8 +35,10 @@ nano .env
 
 Enter your bot token, channel settings, XT affiliate key/secret, referral code
 `7YX74I`, and registration URL. Replace credentials previously shared in chat.
-Leave `XT_REWARD_CHANNEL_URL` blank until the reward channel is ready. Later set
-it to a private invite URL such as `https://t.me/+INVITE_CODE`.
+Configure `XT_REWARD_CHANNEL_ID` with the private numeric channel ID and
+`TRADE_ADMIN_IDS` with trusted Telegram admin IDs. The bot needs Invite Users
+permission in the private channel. Revoke the old shared invite in Telegram;
+`XT_REWARD_CHANNEL_URL` is legacy and is no longer distributed.
 The bot must be an administrator in both required public channels. If XT has an
 IP allowlist, authorize the VPS public outbound IP. Enable server time sync for
 signed API requests. `.env` is local to each machine and never committed.
@@ -86,14 +88,35 @@ If a pull fails because of local changes, inspect them rather than overwriting.
 Keep the previous working commit SHA for rollback. Stop the VPS bot before
 restarting a PC fallback instance.
 
-## Reward behavior
+## Secure reward rollout
 
-- Fresh XT eligibility success plus a configured reward URL shows a private join button.
-- A blank URL shows that eligibility is met and the reward link is not ready.
-- Referral/deposit failure or an API error never sends the reward link.
-- This is a static invite URL; recipients can forward it. Single-use invites,
-  join-request approval, and Telegram-to-XT account ownership verification are
-  not implemented. An entered UID alone is not proof of ownership.
+1. Revoke all old shared automatic-entry VIP invites in Telegram. Review members
+   already admitted through them. New code cannot revoke an invite made by another
+   administrator or undo previous admissions automatically.
+2. Add the bot as an administrator of the VIP channel with Invite Users rights.
+3. Set `XT_REWARD_CHANNEL_ID=-100...` and `TRADE_ADMIN_IDS=123456,...` in server `.env`.
+4. Back up SQLite before deploying its additive security-table migration.
+5. After an eligible user's ownership is independently verified, a trusted admin
+   sends `/approveuid TELEGRAM_USER_ID XT_UID` to the bot in a private chat.
+6. The user repeats the check and gets a 10-minute identity-bound join-request
+   link. Membership and XT conditions are checked again before approval.
+
+Do not approve ownership merely because someone supplies a working UID.
+The API cannot prove control of the exchange account. Existing eligible rows
+require review; no automatic first-claim ownership is accepted. A UID cannot
+be approved for two Telegram IDs. Binding reassignment has no public command.
+
+Unknown/foreign/expired requests to the configured VIP channel are declined.
+Coordinate paid/manual member admissions with channel administrators; requests
+using external links are not auto-approved. Avoid other auto-entry invites or
+manual approvals that bypass the checks. This bot guards new requests, not
+existing member access or continuous balance conditions. Total-deposit rules and
+XT's historical coverage limitation remain unchanged.
+
+Phone deletion invalidates pending links but retains the security binding and
+persistent rate limit, so it cannot reset a used UID. Back up the complete SQLite
+file; do not restore only contact rows. All these records survive Docker rebuilds.
+The bot stores link hashes, not generated invite URLs, and redacts invite URLs in logs.
 
 ## Operational limits
 
@@ -117,3 +140,20 @@ Never use `down -v` or delete the data volume during upgrades. Rebuilding the
 image and recreating the container preserve saved contacts. Back up the database
 with the bot stopped and keep backups private. `/deletephone` removes the user's
 active record, but historical operator backups require a separate retention policy.
+
+## Discover a private channel ID with forwarding disabled
+
+1. In a private chat with this bot, send `/myid`. It returns only your own numeric
+   Telegram user ID and does not require the VIP channel to be configured.
+2. Put that ID in server `.env`: `TRADE_ADMIN_IDS=YOUR_ID`. Restart the bot to load it.
+3. Privately send `/channelid`. Only configured admins receive a 10-minute code.
+4. Publish the exact code as a new text post in the VIP channel. Both you and the
+   bot must be channel administrators. Forwarding is not used or required.
+5. The bot privately reports `XT_REWARD_CHANNEL_ID=-100...`. Save it in server
+   `.env` and recreate the container. Discovery does not change configuration itself.
+
+Unknown and expired codes are ignored. The requester must also be a channel
+administrator before its ID is disclosed. Codes are one-time and kept in memory;
+after a restart, request a new code. The bot attempts to delete the setup post
+when permissions permit. Discovery results go only to the requesting admin. The setup-code post is visible
+to channel subscribers until it is deleted; it is not an invite or account credential.

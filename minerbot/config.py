@@ -24,7 +24,9 @@ class Settings:
     xt_api_secret: str = field(default="", repr=False)
     xt_referral_code: str = ""
     xt_referral_url: str = ""
-    xt_reward_channel_url: str = field(default="", repr=False)
+    xt_reward_channel_url: str = field(default="", repr=False)  # Legacy only; never delivered.
+    xt_reward_channel_id: int | None = None
+    trade_admin_ids: tuple[int, ...] = ()
 
     @property
     def xt_ready(self) -> bool:
@@ -52,6 +54,12 @@ def load_settings() -> Settings:
         if (parsed.scheme != "https" or parsed.netloc != "t.me" or parsed.query or parsed.fragment
                 or not re.fullmatch(r"/(?:\+|joinchat/)[A-Za-z0-9_-]+", parsed.path)):
             raise ValueError("XT_REWARD_CHANNEL_URL must be a private Telegram invite URL (https://t.me/+...).")
+    raw_channel = os.getenv("XT_REWARD_CHANNEL_ID", "").strip()
+    if raw_channel and not re.fullmatch(r"-100[0-9]+", raw_channel):
+        raise ValueError("XT_REWARD_CHANNEL_ID must be the private channel's numeric -100... ID.")
+    admin_values = [value.strip() for value in os.getenv("TRADE_ADMIN_IDS", "").split(",") if value.strip()]
+    if any(not value.isascii() or not value.isdigit() or not 0 < int(value) <= 9223372036854775807 for value in admin_values):
+        raise ValueError("TRADE_ADMIN_IDS must contain numeric Telegram user IDs.")
     return Settings(
         token=token,
         data_dir=Path(os.getenv("DATA_DIR", str(BASE_DIR / "data"))).expanduser().resolve(),
@@ -62,6 +70,8 @@ def load_settings() -> Settings:
         xt_referral_code=os.getenv("XT_REFERRAL_CODE", "").strip(),
         xt_referral_url=os.getenv("XT_REFERRAL_URL", "").strip(),
         xt_reward_channel_url=reward_url,
+        xt_reward_channel_id=int(raw_channel) if raw_channel else None,
+        trade_admin_ids=tuple(int(value) for value in admin_values),
         additional_channel_ids=tuple(
             channel.strip() for channel in os.getenv("ADDITIONAL_CHANNEL_IDS", "@ahuramine").split(",")
             if channel.strip()
