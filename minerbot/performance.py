@@ -11,7 +11,7 @@ from io import BytesIO
 import re
 import sqlite3
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import KeyboardButton, ReplyKeyboardMarkup
 
 from .content import TRADE_PERFORMANCE_TEXT
 from .handlers import send_text
@@ -108,18 +108,37 @@ def chart_png(points):
     return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR', struct.pack('!2I5B', width, height, 8, 2, 0, 0, 0))+chunk(b'IDAT', zlib.compress(raw))+chunk(b'IEND', b'')
 
 
+PERIOD_LABELS = {'📅 ۷ روز': '7', '📅 ۳۰ روز': '30', '📅 ۹۰ روز': '90', '📅 همه معاملات': 'all'}
+
+
 def keyboard(period):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(label, callback_data='perf:'+value) for label, value in
-         [('۷ روز', '7'), ('۳۰ روز', '30'), ('۹۰ روز', '90'), ('همه', 'all')]],
-        [InlineKeyboardButton('📈 نمودار', callback_data='perf:chart:'+period),
-         InlineKeyboardButton('📋 گزارش قبلی', callback_data='perf:legacy')],
-        [InlineKeyboardButton('🏠 منوی اصلی', callback_data='home')]])
+    return ReplyKeyboardMarkup([
+        [KeyboardButton(label) for label in list(PERIOD_LABELS)[:2]],
+        [KeyboardButton(label) for label in list(PERIOD_LABELS)[2:]],
+        [KeyboardButton('📈 نمودار'), KeyboardButton('📋 گزارش قبلی')],
+        [KeyboardButton('↩️ بازگشت به اتاق ترید')],
+        [KeyboardButton('🏠 منوی اصلی')],
+    ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False)
+
+
+async def performance_menu(context, user_id, text):
+    if text not in {*PERIOD_LABELS, '📈 نمودار', '📋 گزارش قبلی'}:
+        return False
+    context.user_data.pop('trade_awaiting_uid', None)
+    context.user_data.pop('phone_requested_until', None)
+    if text == '📋 گزارش قبلی':
+        await send_text(context, user_id, TRADE_PERFORMANCE_TEXT +
+                        '\n\nگزارش ثابت قبلی؛ تاریخ و واحد مبالغ مشخص نشده است.', keyboard('all'))
+    else:
+        period = PERIOD_LABELS.get(text, context.user_data.get('performance_period', 'all'))
+        await show_dashboard(context, user_id, period, chart=text == '📈 نمودار')
+    return True
 
 
 async def show_dashboard(context, user_id, period='all', chart=False):
     if period not in {'7', '30', '90', 'all'}:
         return
+    context.user_data['performance_period'] = period
     now = datetime.now(timezone.utc)
     with closing(connect(context)) as connection:
         config = connection.execute('SELECT * FROM performance_config WHERE id=1').fetchone()

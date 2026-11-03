@@ -145,14 +145,14 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if label:
             await show_product(context, user_id, PRODUCTS[label])
         else:
-            await send_text(context, user_id, UNKNOWN_TEXT, main_keyboard())
+            await send_text(context, user_id, UNKNOWN_TEXT, trade_menu_keyboard() if context.user_data.get("active_section") == "trade" else main_keyboard())
         return
 
     product_id = None
     if data.startswith("info:"):
         parts = data.split(":", 2)
         if len(parts) != 3 or parts[1] not in PRODUCT_IDS:
-            await send_text(context, user_id, UNKNOWN_TEXT, main_keyboard())
+            await send_text(context, user_id, UNKNOWN_TEXT, trade_menu_keyboard() if context.user_data.get("active_section") == "trade" else main_keyboard())
             return
         _, product_id, data = parts
         product = PRODUCTS[PRODUCT_IDS[product_id]]
@@ -191,7 +191,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                     parse_mode=ParseMode.HTML, reply_markup=navigation,
                 )
     else:
-        await send_text(context, user_id, UNKNOWN_TEXT, main_keyboard())
+        await send_text(context, user_id, UNKNOWN_TEXT, trade_menu_keyboard() if context.user_data.get("active_section") == "trade" else main_keyboard())
 
 
 async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -224,9 +224,12 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     }.get(text, text)
     if not await require_membership(context, user_id):
         return
+    from .performance import performance_menu
+    if await performance_menu(context, user_id, text):
+        return
     # Keep existing reply-keyboard messages working during the UI transition.
     product = PRODUCTS.get(text)
-    if text in {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL, "🏠 منوی اصلی", "💬 پشتیبانی"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
+    if text in {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL, "🏠 منوی اصلی", "💬 پشتیبانی", "🔗 ثبت‌نام با کد اهوراماین", "🔎 بررسی شرایط حساب XT"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
         context.user_data.pop("trade_awaiting_uid", None)
         context.user_data.pop("phone_requested_until", None)
     elif context.user_data.get("phone_requested_until"):
@@ -240,6 +243,14 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await send_text(context, user_id, LIGHTNING_TEXT, lightning_menu_keyboard())
     elif text == TRADE_LABEL:
         await show_trade_room(context, user_id)
+    elif text == "🔎 بررسی شرایط حساب XT":
+        await show_trade(context, user_id, begin_check=True)
+    elif text == "🔗 ثبت‌نام با کد اهوراماین":
+        if await require_trade_phone(context, user_id):
+            url = settings_for(context).xt_referral_url
+            await send_text(context, user_id,
+                            "🔗 ثبت‌نام با کد اهوراماین\n\n" + (url if url.startswith("https://") else "لینک ثبت‌نام هنوز تنظیم نشده است."),
+                            trade_keyboard())
     elif text == "💬 پشتیبانی":
         if await require_trade_phone(context, user_id):
             await send_text(context, user_id, TRADE_SUPPORT_TEXT, subscription_keyboard())
@@ -264,7 +275,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif text in MENU_TEXTS:
         await send_text(context, user_id, MENU_TEXTS[text], contact_keyboard())
     else:
-        await send_text(context, user_id, UNKNOWN_TEXT, main_keyboard())
+        await send_text(context, user_id, UNKNOWN_TEXT, trade_menu_keyboard() if context.user_data.get("active_section") == "trade" else main_keyboard())
 
 
 async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -305,7 +316,7 @@ async def show_trade(context: ContextTypes.DEFAULT_TYPE, user_id: int, *, begin_
         await send_text(context, user_id,
                         "🎁 عضویت رایگان کانال VIP\n\n" + VPN_REMINDER +
                         "\n\n🔗 با لینک زیر داخل صرافی xt ثبت نام کنید و بعد از ثبت نام حساب خود را ۱۰۰ دلار شارژ کنید" +
-                        "\nکد دعوت اهوراماین: " + settings.xt_referral_code +
+                        "\n" + settings.xt_referral_url + "\nکد دعوت اهوراماین: " + settings.xt_referral_code +
                         "\n\n🔎 برای دریافت اشتراک رایگان گزینه بررسی شرایط حساب را بزنید و بعد UID حساب صرافی خودتان را ارسال کنید" +
                         "\n\n✅ شرایط تأیید: ثبت‌نام با کد دعوت اهوراماین و مجموع واریز حداقل ۱۰۰ USDT.",
                         trade_keyboard(settings.xt_referral_url), bold_lines=(VPN_REMINDER,))
@@ -357,7 +368,7 @@ async def check_trade_uid(context: ContextTypes.DEFAULT_TYPE, user_id: int, text
             return
         if state == "invite":
             await send_text(context, user_id,
-                            "🎉 شرایط حساب تأیید شد\n\nUID شما به این حساب تلگرام اختصاص یافت.\nاین درخواست عضویت فقط برای حساب تلگرام شما معتبر است و ۱۰ دقیقه اعتبار دارد. پس از ارسال درخواست، شرایط شما دوباره بررسی می‌شود.",
+                            "🎉 شرایط حساب تأیید شد\n\nUID شما به این حساب تلگرام اختصاص یافت.\nاین درخواست عضویت فقط برای حساب تلگرام شما معتبر است و ۱۰ دقیقه اعتبار دارد. پس از ارسال درخواست، شرایط شما دوباره بررسی می‌شود.\n\n🎁 لینک عضویت شخصی:\n" + link,
                             reward_keyboard(link))
             return
         if state == "conflict":

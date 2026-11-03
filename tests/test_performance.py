@@ -41,7 +41,7 @@ class AdminTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        self.context = SimpleNamespace(bot_data={
+        self.context = SimpleNamespace(user_data={}, bot_data={
             'contacts': ContactStore(Path(directory.name)/'db.sqlite3'),
             'settings': SimpleNamespace(trade_admin_ids=(99,))})
 

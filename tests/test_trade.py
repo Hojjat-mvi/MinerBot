@@ -47,14 +47,11 @@ class XTTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(headers["validate-signature"], "23d282c60162270ccded09e02c6c16e5e7916abcb0bf92f59540adb37b3f9387")
         self.assertEqual(headers["validate-recvwindow"], "5000")
 
-    def test_registration_button_uses_configured_link(self):
+    def test_trade_menu_has_registration_and_support_actions(self):
         from minerbot.keyboards import trade_keyboard
-        link = "https://www.xtfarsi.net/ref/7YX74I"
-        self.assertEqual(trade_keyboard(link).inline_keyboard[0][0].url, link)
-        self.assertEqual(
-            {button.url for row in trade_keyboard().inline_keyboard for button in row if button.url},
-            {"https://t.me/Ahurasupport_trading"},
-        )
+        labels = {b.text for row in trade_keyboard().keyboard for b in row}
+        self.assertIn("🔗 ثبت‌نام با کد اهوراماین", labels)
+        self.assertIn("💬 پشتیبانی", labels)
 
     def test_uid_normalization(self):
         self.assertEqual(normalize_uid(" ۱۲۳۴۵۶ "), "123456")
@@ -252,7 +249,8 @@ class RewardTests(unittest.IsolatedAsyncioTestCase):
         await self.callback("trade:check")
         await self.text("123456")
         keyboard = self.bot.send_message.call_args.kwargs["reply_markup"]
-        self.assertEqual(keyboard.inline_keyboard[0][0].url, "https://t.me/+test_bound_invite")
+        self.assertIsNotNone(keyboard.keyboard)
+        self.assertIn("https://t.me/+test_bound_invite", self.bot.send_message.call_args.kwargs["text"])
         self.bot.create_chat_invite_link.assert_awaited_once()
         self.assertNotIn(link, str(self.bot.send_message.call_args.kwargs))
 
@@ -323,7 +321,7 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("گزینه بررسی شرایط حساب را بزنید", sent["text"])
         self.assertIn("حساب صرافی خودتان را ارسال کنید", sent["text"])
         markup = sent["reply_markup"]
-        self.assertIn("trade:check", {button.callback_data for row in markup.inline_keyboard for button in row})
+        self.assertIn("🔎 بررسی شرایط حساب XT", {button.text for row in markup.keyboard for button in row})
         await self.callback("trade:check")
         await self.text("123456")
         self.verifier.verify.assert_awaited_once_with("123456")
@@ -338,7 +336,7 @@ class TradeRoomTests(unittest.IsolatedAsyncioTestCase):
             if label == MONTHLY_LABEL:
                 self.assertIn("↩️ بازگشت به اتاق ترید", {button.text for row in markup.keyboard for button in row})
             else:
-                self.assertIn("trade", {button.callback_data for row in markup.inline_keyboard for button in row})
+                self.assertIn("↩️ بازگشت به اتاق ترید", {button.text for row in markup.keyboard for button in row})
         self.verifier.verify.assert_not_awaited()
 
     async def test_legacy_labels_with_whitespace_still_route(self):
@@ -447,20 +445,14 @@ class TradeSupportPerformanceTests(unittest.IsolatedAsyncioTestCase):
         await self.callback("trade")
         await self.callback("contact")
         sent = self.bot.send_message.call_args.kwargs
-        urls = {b.url for row in sent["reply_markup"].inline_keyboard for b in row if b.url}
-        self.assertEqual(urls, {"https://t.me/Ahurasupport_trading"})
+        self.assertIn("💬 پشتیبانی", {b.text for row in sent["reply_markup"].keyboard for b in row})
         self.assertIn("Ahurasupport_trading", sent["text"])
         self.assertNotIn("091", sent["text"])
 
-    def test_all_trade_support_keyboards_have_only_one_support_destination(self):
+    def test_all_trade_support_keyboards_use_menu_buttons(self):
         from minerbot.keyboards import trade_keyboard, trade_section_keyboard, subscription_keyboard
-        for keyboard in [trade_keyboard(), trade_section_keyboard()]:
-            urls = [b.url for row in keyboard.inline_keyboard for b in row if b.url]
-            self.assertEqual(urls, ["https://t.me/Ahurasupport_trading"])
-            for row in keyboard.inline_keyboard:
-                for button in row:
-                    if button.url:
-                        self.assertEqual(button.text, "💬 پشتیبانی")
+        for keyboard in [trade_keyboard(), trade_section_keyboard(), subscription_keyboard()]:
+            self.assertIn("💬 پشتیبانی", {b.text for row in keyboard.keyboard for b in row})
 
 
 if __name__ == "__main__":

@@ -123,33 +123,28 @@ def persistent_menu_keyboard() -> ReplyKeyboardMarkup:
        input_field_placeholder="بخش موردنظر را انتخاب کنید…")
 
 
-def trade_keyboard(referral_url: str = "") -> InlineKeyboardMarkup:
-    rows = []
-    if referral_url.startswith("https://"):
-        rows.append([InlineKeyboardButton("🔗 ثبت‌نام با کد اهوراماین", url=referral_url, style="primary")])
-    return InlineKeyboardMarkup(rows + [
-        [button("🔎 بررسی شرایط حساب XT", "trade:check", "success")],
-        [button("↩️ دریافت اشتراک", "trade:subscriptions")],
-        [button("↩️ بازگشت به اتاق ترید", "trade")],
-        [InlineKeyboardButton("💬 پشتیبانی", url=f"https://t.me/{TRADE_SUPPORT_USERNAME}", style="success")],
-        [button("🏠 منوی اصلی", "home")],
-    ])
+def trade_keyboard(referral_url: str = "") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([
+        [KeyboardButton("🔗 ثبت‌نام با کد اهوراماین", style="primary")],
+        [KeyboardButton("🔎 بررسی شرایط حساب XT", style="success")],
+        [KeyboardButton("↩️ دریافت اشتراک")],
+        [KeyboardButton("↩️ بازگشت به اتاق ترید")],
+        [KeyboardButton("💬 پشتیبانی")],
+        [KeyboardButton("🏠 منوی اصلی")],
+    ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False)
 
 
-def reward_keyboard(invite_url: str) -> InlineKeyboardMarkup:
-    """Only attach this keyboard after a fresh successful XT eligibility check."""
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🎁 عضویت در کانال خصوصی اهوراماین", url=invite_url, style="success")],
-        [button("🏠 منوی اصلی", "home")],
-    ])
+def reward_keyboard(invite_url: str) -> ReplyKeyboardMarkup:
+    # The fresh personal invite is in the confirmation message, never cached.
+    return trade_section_keyboard()
 
 
-def trade_section_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 پشتیبانی", url=f"https://t.me/{TRADE_SUPPORT_USERNAME}", style="success")],
-        [button("↩️ بازگشت به اتاق ترید", "trade")],
-        [button("🏠 منوی اصلی", "home")],
-    ])
+def trade_section_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([
+        [KeyboardButton("💬 پشتیبانی", style="success")],
+        [KeyboardButton("↩️ بازگشت به اتاق ترید")],
+        [KeyboardButton("🏠 منوی اصلی")],
+    ], resize_keyboard=True, is_persistent=False, one_time_keyboard=False)
 
 
 def phone_keyboard() -> ReplyKeyboardMarkup:

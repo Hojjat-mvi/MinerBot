@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from .handlers import send_text
-from .keyboards import main_keyboard
+from .keyboards import persistent_menu_keyboard, trade_menu_keyboard
 
 ACCOUNT_LABEL = "👤 حساب من"
 STATUS = {"submitted": "ارسال‌شده", "unavailable": "بررسی ناموفق", "not_referred": "معرف تأیید نشد",
@@ -34,7 +34,7 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         lines.append("شماره‌ای ثبت نشده است؛ برای ثبت شماره وارد اتاق ترید شوید.")
     lines.extend([f"اطلاعیه‌ها: {'فعال' if store(context).is_subscribed(uid) else 'غیرفعال'}",
                   "نتیجهٔ ذخیره‌شده تأیید لحظه‌ای حساب یا عضویت VIP نیست."])
-    await send_text(context, uid, "\n\n".join(lines), main_keyboard())
+    await send_text(context, uid, "\n\n".join(lines), trade_menu_keyboard() if context.user_data.get("active_section") == "trade" else persistent_menu_keyboard())
 
 
 async def performance_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
