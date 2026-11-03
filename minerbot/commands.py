@@ -20,7 +20,7 @@ USER_COMMANDS = (
     BotCommand("nodes", "⚡ دستگاه‌های لایتنینگ"),
     BotCommand("support", "💬 پشتیبانی"),
     BotCommand("account", "👤 حساب من"),
-    BotCommand("performance", "📊 داشبورد عملکرد"),
+    BotCommand("performance", "📊 برآیند معاملات"),
     BotCommand("help", "❓ راهنمای استفاده"),
     BotCommand("stop", "🔕 لغو اطلاعیه‌های همگانی"),
     BotCommand("subscribe", "🔔 دریافت دوبارهٔ اطلاعیه‌ها"),
@@ -80,7 +80,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     "⚡ /nodes — معرفی دستگاه‌های لایتنینگ\n"
                     "💬 /support — ارتباط با پشتیبانی\n"
                     "👤 /account — حساب من\n"
-                    "📊 /performance — داشبورد عملکرد\n"
+                    "📊 /performance — برآیند معاملات\n"
                     "🔕 /stop — لغو اطلاعیه‌ها\n"
                     "🔔 /subscribe — فعال‌سازی اطلاعیه‌ها\n"
                     "🗑 /deletephone — حذف شماره و UID پرونده؛ سابقهٔ تخصیص اشتراک برای جلوگیری از استفادهٔ تکراری حفظ می‌شود.\n\n"

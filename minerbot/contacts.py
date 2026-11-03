@@ -254,21 +254,3 @@ class ContactStore:
             connection.row_factory = sqlite3.Row
             row = connection.execute("SELECT * FROM contacts WHERE telegram_user_id=?", (user_id,)).fetchone()
             return dict(row) if row else None
-
-    def performance_connection(self) -> sqlite3.Connection:
-        """Initialize ledger tables, closing the connection if migration fails."""
-        connection = self._connect()
-        try:
-            connection.row_factory = sqlite3.Row
-            with connection:
-                connection.execute("""CREATE TABLE IF NOT EXISTS performance_config (
-                    id INTEGER PRIMARY KEY CHECK(id=1), capital TEXT NOT NULL,
-                    currency TEXT NOT NULL, starts_at TEXT NOT NULL)""")
-                connection.execute("""CREATE TABLE IF NOT EXISTS performance_trades (
-                    reference TEXT PRIMARY KEY, closed_at TEXT NOT NULL, pnl TEXT NOT NULL,
-                    symbol TEXT NOT NULL, created_by INTEGER NOT NULL, voided INTEGER NOT NULL DEFAULT 0)""")
-                connection.execute("CREATE INDEX IF NOT EXISTS performance_closed_at ON performance_trades(closed_at, reference)")
-            return connection
-        except Exception:
-            connection.close()
-            raise

@@ -1,4 +1,4 @@
-"""Private account details and performance dashboard entry points."""
+"""Private account details and trade report shortcut."""
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -39,9 +39,6 @@ async def account_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def performance_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     cancel(context)
-    await show_dashboard(context, update.effective_user.id)
-
-
-async def show_dashboard(context, user_id):
-    from .performance import show_dashboard as show_live_dashboard
-    await show_live_dashboard(context, user_id)
+    from .handlers import require_membership, show_trade_results
+    if await require_membership(context, update.effective_user.id):
+        await show_trade_results(context, update.effective_user.id)

@@ -404,10 +404,9 @@ class NestedSubscriptionTests(unittest.IsolatedAsyncioTestCase):
     async def test_results_navigation_cancels_uid_input(self):
         from minerbot.keyboards import RESULTS_LABEL
         await self.callback("trade:check")
-        with patch("minerbot.member_services.show_dashboard", new_callable=AsyncMock) as dashboard:
-            await self.text(RESULTS_LABEL)
+        await self.text(RESULTS_LABEL)
         self.assertNotIn("trade_awaiting_uid", self.context.user_data)
-        dashboard.assert_awaited_once_with(self.context, 42)
+        self.assertIn("Trading Performance", self.bot.send_message.call_args.kwargs["text"])
         self.verifier.verify.assert_not_awaited()
 
     async def test_uid_saved_with_result_status(self):
@@ -431,13 +430,9 @@ class TradeSupportPerformanceTests(unittest.IsolatedAsyncioTestCase):
     text = TradeFlowTests.text
 
     async def test_performance_report_has_bold_period_and_supplied_totals(self):
-        from minerbot.performance import performance_callback
-        update = SimpleNamespace(
-            effective_chat=SimpleNamespace(type="private"),
-            callback_query=SimpleNamespace(answer=AsyncMock(), from_user=SimpleNamespace(id=42), data="perf:legacy"))
-        await performance_callback(update, self.context)
+        await self.callback("trade:results")
         sent = self.bot.send_message.call_args.kwargs
-        self.assertIn("برآیند ۴۵ روز گذشته", sent["text"])
+        self.assertIn("<b>\u200fبرآیند ۴۵ روز گذشته</b>", sent["text"])
         for value in ["۷۳ معامله", "۵۶ تارگت", "۱۷ استاپ", "4,325.73", "-850", "3,475.73"]:
             self.assertIn(value, sent["text"])
 

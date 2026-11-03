@@ -224,9 +224,6 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     }.get(text, text)
     if not await require_membership(context, user_id):
         return
-    from .performance import performance_menu
-    if await performance_menu(context, user_id, text):
-        return
     # Keep existing reply-keyboard messages working during the UI transition.
     product = PRODUCTS.get(text)
     if text in {LIGHTNING_LABEL, TRADE_LABEL, FREE_LABEL, TRAINING_LABEL, MONTHLY_LABEL, SUBSCRIPTIONS_LABEL, RESULTS_LABEL, "🏠 منوی اصلی", "💬 پشتیبانی", "🔗 ثبت‌نام با کد اهوراماین", "🔎 بررسی شرایط حساب XT"} or product or text in MENU_TEXTS or text == "💵 قیمت و درآمد دستگاه‌ها":
@@ -460,5 +457,5 @@ async def show_subscriptions(context: ContextTypes.DEFAULT_TYPE, user_id: int) -
 async def show_trade_results(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
     if not await require_trade_phone(context, user_id):
         return
-    from .member_services import show_dashboard
-    await show_dashboard(context, user_id)
+    await send_text(context, user_id, TRADE_PERFORMANCE_TEXT, trade_section_keyboard(),
+                    bold_lines=("برآیند ۴۵ روز گذشته",))
